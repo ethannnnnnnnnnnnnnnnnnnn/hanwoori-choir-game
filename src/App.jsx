@@ -19,20 +19,33 @@ import {
 // ==========================================
 // 0. FIREBASE & MULTIPLAYER INITIALIZATION
 // ==========================================
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCA1K9nYC3UDIy-MU6XFJFK9PUh8OAFPPs",
+  authDomain: "hanwoori-choir-game.firebaseapp.com",
+  projectId: "hanwoori-choir-game",
+  storageBucket: "hanwoori-choir-game.firebasestorage.app",
+  messagingSenderId: "659716969127",
+  appId: "1:659716969127:web:e31ade6b013306c41a4182"
+};
+
 let app = null;
 let auth = null;
 let db = null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'hanwoori-choir-20th';
 
 try {
-  let firebaseConfig = null;
+  let firebaseConfig = DEFAULT_FIREBASE_CONFIG;
   if (typeof __firebase_config !== 'undefined' && __firebase_config) {
     firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
   } else if (import.meta.env && import.meta.env.VITE_FIREBASE_CONFIG) {
-    firebaseConfig = JSON.parse(import.meta.env.VITE_FIREBASE_CONFIG);
+    try {
+      firebaseConfig = JSON.parse(import.meta.env.VITE_FIREBASE_CONFIG);
+    } catch (err) {
+      console.warn('VITE_FIREBASE_CONFIG parse error, using default:', err);
+    }
   }
 
-  if (firebaseConfig) {
+  if (firebaseConfig && firebaseConfig.apiKey) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
@@ -1645,6 +1658,8 @@ export default function App() {
   // ==========================================
   // 5. FIREBASE & MULTI-TAB REALTIME SYNC
   // ==========================================
+  const lastPlayerSyncTimeRef = useRef(0);
+
   useEffect(() => {
     if (!auth) return;
     const initAuth = async () => {
@@ -1655,7 +1670,7 @@ export default function App() {
           await signInAnonymously(auth);
         }
       } catch (e) {
-        console.warn('Auth warning:', e);
+        console.warn('Firebase Auth warning:', e);
       }
     };
     initAuth();
@@ -1663,7 +1678,7 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  // 브라우저 탭 간 실시간 동기화 (BroadcastChannel) + Firestore 연동
+  // 브라우저 탭 간 실시간 동기화 (BroadcastChannel)
   useEffect(() => {
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       const bc = new BroadcastChannel('hanwoori_choir_party_channel');
@@ -1686,6 +1701,7 @@ export default function App() {
     }
   }, []);
 
+  // Firestore 게임 상태 브로드캐스트 & 저장
   const broadcastState = useCallback((newState) => {
     setGameState((prev) => {
       const updated = typeof newState === 'function' ? newState(prev) : { ...prev, ...newState };
@@ -1693,16 +1709,17 @@ export default function App() {
         broadcastRef.current.postMessage({ type: 'SYNC_GAME_STATE', payload: updated });
       }
       if (db && user) {
-        const stateRef = doc(db, 'artifacts', appId, 'public', 'data', 'gameState', 'main');
-        setDoc(stateRef, updated, { merge: true }).catch(() => {});
+        const stateRef = doc(db, 'hanwoori_party', 'gameState');
+        setDoc(stateRef, updated, { merge: true }).catch((err) => console.warn('GameState save error:', err));
       }
       return updated;
     });
   }, [user]);
 
+  // Firestore 게임 상태 실시간 구독
   useEffect(() => {
     if (!db || !user) return;
-    const stateRef = doc(db, 'artifacts', appId, 'public', 'data', 'gameState', 'main');
+    const stateRef = doc(db, 'hanwoori_party', 'gameState');
     const unsub = onSnapshot(
       stateRef,
       (snap) => {
@@ -1714,6 +1731,61 @@ export default function App() {
     );
     return () => unsub();
   }, [user]);
+
+  // Firestore 플레이어 실시간 동기화 헬퍼 (쓰로틀링 적용)
+  const syncPlayerToFirestore = useCallback((playerData, force = false) => {
+    if (!db || !user || !playerData) return;
+    const now = performance.now();
+    if (!force && now - lastPlayerSyncTimeRef.current < 150) {
+      return; // 쓰로틀링 (150ms 이내 중복 전송 방지)
+    }
+    lastPlayerSyncTimeRef.current = now;
+    const playerDocRef = doc(db, 'hanwoori_party_players', playerData.id);
+    setDoc(playerDocRef, playerData, { merge: true }).catch((err) => console.warn('Player sync error:', err));
+  }, [user]);
+
+  // Firestore 전체 플레이어 실시간 구독 (스마트폰 & PC & 스크린 실시간 크로스 디바이스 연동)
+  useEffect(() => {
+    if (!db || !user) return;
+    const playersColRef = collection(db, 'hanwoori_party_players');
+    const unsub = onSnapshot(
+      playersColRef,
+      (snap) => {
+        const remotePlayers = [];
+        snap.forEach((docSnap) => {
+          remotePlayers.push(docSnap.data());
+        });
+
+        if (remotePlayers.length > 0) {
+          setPlayers((prev) => {
+            // 원격에 있는 플레이어들과 로컬 플레이어 병합
+            const map = new Map();
+            // 1. 기존 봇 유지
+            prev.filter((p) => p.isBot).forEach((bot) => map.set(bot.id, bot));
+            // 2. 원격 플레이어 적용
+            remotePlayers.forEach((rp) => {
+              if (rp.id === myId) {
+                // 내 캐릭터는 로컬의 빠른 이동을 유지하되 점수/상태 등 서버 변경사항 동기화
+                const current = prev.find((p) => p.id === myId) || rp;
+                map.set(myId, {
+                  ...current,
+                  score: rp.score !== undefined ? rp.score : current.score,
+                  wins: rp.wins !== undefined ? rp.wins : current.wins,
+                  correctCount: rp.correctCount !== undefined ? rp.correctCount : current.correctCount,
+                  status: rp.status || current.status,
+                });
+              } else {
+                map.set(rp.id, rp);
+              }
+            });
+            return Array.from(map.values());
+          });
+        }
+      },
+      (err) => console.warn('Firestore players snapshot warning:', err)
+    );
+    return () => unsub();
+  }, [user, myId]);
 
   // ==========================================
   // 6. COLLISION DETECTION & MOVEMENT ENGINE
@@ -1772,6 +1844,7 @@ export default function App() {
       if (broadcastRef.current) {
         broadcastRef.current.postMessage({ type: 'SYNC_PLAYER_MOVE', payload: myData });
       }
+      syncPlayerToFirestore(myData, true);
       return nextList;
     });
     setHasJoined(true);
@@ -1816,11 +1889,14 @@ export default function App() {
     const targetY = 470 + (Math.random() * 140 - 70);
 
     setPlayers((prev) =>
-      prev.map((p) =>
-        p.id === myId
-          ? { ...p, targetX, targetY, selectedChoice: zone }
-          : p
-      )
+      prev.map((p) => {
+        if (p.id === myId) {
+          const updated = { ...p, targetX, targetY, selectedChoice: zone };
+          syncPlayerToFirestore(updated, true);
+          return updated;
+        }
+        return p;
+      })
     );
   };
 
@@ -1842,11 +1918,25 @@ export default function App() {
   const triggerEmote = (emoji) => {
     soundFX.playSelect();
     setPlayers((prev) =>
-      prev.map((p) => (p.id === myId ? { ...p, emote: emoji } : p))
+      prev.map((p) => {
+        if (p.id === myId) {
+          const updated = { ...p, emote: emoji };
+          syncPlayerToFirestore(updated, true);
+          return updated;
+        }
+        return p;
+      })
     );
     setTimeout(() => {
       setPlayers((prev) =>
-        prev.map((p) => (p.id === myId && p.emote === emoji ? { ...p, emote: null } : p))
+        prev.map((p) => {
+          if (p.id === myId && p.emote === emoji) {
+            const cleared = { ...p, emote: null };
+            syncPlayerToFirestore(cleared, true);
+            return cleared;
+          }
+          return p;
+        })
       );
     }, 2500);
   };
@@ -2135,7 +2225,14 @@ export default function App() {
           };
         });
 
-        return stateChanged ? nextPlayers : prevPlayers;
+        if (stateChanged) {
+          const me = nextPlayers.find((p) => p.id === myId);
+          if (me && me.isMoving) {
+            syncPlayerToFirestore(me);
+          }
+          return nextPlayers;
+        }
+        return prevPlayers;
       });
 
       // ==========================================
@@ -2422,6 +2519,15 @@ export default function App() {
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
                 실시간 {players.length}명 접속중
               </span>
+              {user ? (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium hidden sm:inline">
+                  🔥 Firebase 연결됨
+                </span>
+              ) : (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-800 text-stone-400 border border-stone-700 font-medium hidden sm:inline">
+                  📡 로컬 모드
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-stone-400 hidden sm:block">
               원본 음악실 완벽 재현 · 독립 SD 아바타 · 실시간 A/B 서바이벌 퀴즈
