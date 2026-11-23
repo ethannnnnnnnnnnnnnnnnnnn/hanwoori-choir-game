@@ -112,10 +112,9 @@ const LOBBY_OBSTACLES = [
   { id: 'top_wall', name: '상단 칠판 벽면', x: 0, y: 0, w: 1200, h: 255, sortY: 255 },
   { id: 'left_bookshelf', name: '좌측 악보 책장', x: 0, y: 255, w: 115, h: 310, sortY: 540 },
   { id: 'right_bookshelf', name: '우측 악기 수납장', x: 1085, y: 255, w: 115, h: 310, sortY: 540 },
-  // 중앙 그랜드 피아노 & 미니 이젤 칠판
+  // 중앙 그랜드 피아노
   { id: 'grand_piano', name: '중앙 그랜드 피아노', x: 515, y: 270, w: 225, h: 125, sortY: 380 },
   { id: 'piano_bench', name: '피아노 의자', x: 490, y: 392, w: 72, h: 42, sortY: 425 },
-  { id: 'center_easel', name: '중앙 미니 칠판 이젤', x: 660, y: 385, w: 125, h: 75, sortY: 450 },
   // 좌측 하단 라운지 테이블 구역
   { id: 'lounge_table', name: '좌하단 티테이블 라운지', x: 45, y: 585, w: 295, h: 185, sortY: 720 },
   // 우측 하단 공지사항 데스크 구역
@@ -529,49 +528,84 @@ function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
   drawRoundedRect(ctx, boardX, boardY, boardW, boardH, 4);
   ctx.fill();
 
-  // 칠판 상단 덩굴 식물 & 전구 가랜드
-  ctx.fillStyle = '#3c6e47';
+  // 칠판 상단 크리스마스 솔가지 & 알록달록 LED 전구 가랜드
+  ctx.fillStyle = '#265838';
   for (let i = 0; i < 22; i++) {
     const lx = boardX + 12 + i * 24;
     const ly = boardY - 2 + Math.sin(i * 1.3) * 5;
     ctx.beginPath();
-    ctx.arc(lx, ly, 9, 0, Math.PI * 2);
+    ctx.arc(lx, ly, 10, 0, Math.PI * 2);
     ctx.fill();
+    // 솔잎 질감 점
+    ctx.fillStyle = '#1c452b';
+    ctx.fillRect(lx - 4, ly - 2, 8, 3);
+    ctx.fillStyle = '#265838';
   }
-  // 따뜻한 전구 빛
+
+  // 칠판 중앙 크리스마스 리스 (Wreath)
+  const wx = boardX + boardW / 2;
+  const wy = boardY - 2;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(wx, wy, 24, 0, Math.PI * 2);
+  ctx.strokeStyle = '#1d5432';
+  ctx.lineWidth = 14;
+  ctx.stroke();
+  // 리스 장식 베리
+  ctx.fillStyle = '#e63946';
+  [[-16, 0], [16, 0], [0, 16], [-11, 11], [11, 11]].forEach(([dx, dy]) => {
+    ctx.beginPath();
+    ctx.arc(wx + dx, wy + dy, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  // 리스 상단 빨간 리본
+  ctx.fillStyle = '#d90429';
+  ctx.beginPath();
+  ctx.ellipse(wx - 7, wy - 16, 8, 5, -0.4, 0, Math.PI * 2);
+  ctx.ellipse(wx + 7, wy - 16, 8, 5, 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(wx - 3, wy - 18, 6, 6);
+  ctx.restore();
+
+  // 크리스마스 알록달록 반짝이는 LED 전구 빛 (빨강, 초록, 골드, 화이트)
+  const bulbColors = ['#ff4d4d', '#2ecc71', '#ffd700', '#ffffff', '#ff7675', '#00cec9'];
   for (let i = 0; i < 11; i++) {
     const bx = boardX + 25 + i * 48;
     const by = boardY + 6 + Math.sin(i) * 4;
-    const glow = ctx.createRadialGradient(bx, by, 1, bx, by, 14);
-    glow.addColorStop(0, 'rgba(255, 240, 180, 0.95)');
-    glow.addColorStop(1, 'rgba(255, 210, 100, 0)');
+    const color = bulbColors[(i + Math.floor(time * 2)) % bulbColors.length];
+    const glow = ctx.createRadialGradient(bx, by, 1, bx, by, 16);
+    glow.addColorStop(0, color);
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(bx, by, 14, 0, Math.PI * 2);
+    ctx.arc(bx, by, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(bx, by, 4, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // 칠판 텍스트 (원본 이미지 문구 100% 반영)
+  // 칠판 텍스트 (삼성 한우리 합창단 20기 메인 타이틀)
   ctx.save();
   ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(255, 248, 231, 0.92)';
-  ctx.font = 'bold 31px "Georgia", "Noto Serif KR", serif';
-  ctx.fillText('Hanwoori Choir', boardX + boardW / 2, boardY + 68);
-
-  ctx.font = 'bold 28px "Noto Sans KR", sans-serif';
-  ctx.fillText('20기 합창단 ♪', boardX + boardW / 2, boardY + 110);
+  ctx.fillStyle = '#fff9e6';
+  ctx.shadowColor = 'rgba(255, 220, 120, 0.55)';
+  ctx.shadowBlur = 10;
+  ctx.font = 'bold 32px "Noto Serif KR", "Georgia", serif';
+  ctx.fillText('삼성 한우리 합창단 20기', boardX + boardW / 2, boardY + 92);
+  ctx.shadowBlur = 0;
 
   ctx.font = '16px "Noto Sans KR", sans-serif';
-  ctx.fillStyle = 'rgba(255, 240, 200, 0.88)';
-  ctx.fillText('✨ 함께 부르는, 더 특별한 우리 ✨', boardX + boardW / 2, boardY + 150);
+  ctx.fillStyle = 'rgba(255, 235, 200, 0.9)';
+  ctx.fillText('🎄 2024 송년의 밤 & 메리 크리스마스 🎵', boardX + boardW / 2, boardY + 138);
 
-  // 칠판 우측 서브 문구
+  // 칠판 우측 서브 문구 (- Hanwoori - 제거됨)
   ctx.textAlign = 'left';
   ctx.font = '13px "Noto Serif KR", serif';
-  ctx.fillStyle = 'rgba(235, 245, 235, 0.8)';
-  ctx.fillText('좋은 목소리는', boardX + boardW - 115, boardY + 86);
-  ctx.fillText('좋은 마음에서', boardX + boardW - 115, boardY + 106);
-  ctx.fillText('- Hanwoori -', boardX + boardW - 115, boardY + 126);
+  ctx.fillStyle = 'rgba(235, 245, 235, 0.85)';
+  ctx.fillText('좋은 목소리는', boardX + boardW - 110, boardY + 92);
+  ctx.fillText('좋은 마음에서 ♪', boardX + boardW - 110, boardY + 115);
 
   // 칠판 좌측 오선지 & 음표 그림
   ctx.strokeStyle = 'rgba(255,255,255,0.28)';
@@ -588,15 +622,19 @@ function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
   ctx.fillText('♪', boardX + 75, boardY + 115);
   ctx.restore();
 
-  // 칠판 좌측 위 선반 & 검은 고양이 (원본 디테일)
+  // 칠판 좌측 위 선반 & 고양이 (귀여운 산타 모자)
   ctx.fillStyle = '#8c5832';
   ctx.fillRect(215, 78, 100, 10);
-  // 화분
+  // 포인세티아 화분
   ctx.fillStyle = '#c87d55';
   ctx.fillRect(225, 55, 22, 23);
-  ctx.fillStyle = '#3f7a4d';
+  ctx.fillStyle = '#e63946';
   ctx.beginPath();
   ctx.arc(236, 48, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffd166';
+  ctx.beginPath();
+  ctx.arc(236, 48, 4, 0, Math.PI * 2);
   ctx.fill();
   // 검은 고양이
   ctx.fillStyle = '#232026';
@@ -604,12 +642,25 @@ function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
   ctx.arc(285, 62, 13, 0, Math.PI * 2); // 몸통
   ctx.arc(285, 45, 9, 0, Math.PI * 2);  // 머리
   ctx.fill();
+  // 고양이 산타 모자
+  ctx.fillStyle = '#e63946';
+  ctx.beginPath();
+  ctx.moveTo(279, 39);
+  ctx.lineTo(291, 39);
+  ctx.lineTo(285, 26);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(285, 25, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(278, 38, 14, 3);
   // 고양이 노란 눈
   ctx.fillStyle = '#ffd166';
   ctx.fillRect(281, 43, 3, 3);
   ctx.fillRect(287, 43, 3, 3);
 
-  // 5) 우측 상단 합창단 단체 액자 & 벽면 포스터
+  // 5) 우측 상단 합창단 단체 액자 & 크리스마스 산타 양말 장식
   ctx.fillStyle = '#6b4226';
   ctx.fillRect(915, 16, 155, 98);
   ctx.fillStyle = '#2d3142';
@@ -625,17 +676,24 @@ function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
       ctx.fillRect(934 + c * 15, 50 + r * 18, 8, 8);
     }
   }
-  // 우측 벽 "Music People Together Hanwoori" 보드
-  ctx.fillStyle = '#f2e8dc';
-  ctx.fillRect(1110, 48, 76, 135);
-  ctx.strokeStyle = '#b08968';
-  ctx.strokeRect(1110, 48, 76, 135);
-  ctx.fillStyle = '#6e5239';
-  ctx.font = '11px serif';
-  ctx.fillText('Music', 1122, 82);
-  ctx.fillText('People', 1122, 102);
-  ctx.fillText('Together', 1120, 122);
-  ctx.fillText('Hanwoori', 1118, 142);
+
+  // 우측 벽 아기자기한 크리스마스 양말 장식 (튀어나가던 Music People 보드 대체)
+  ctx.save();
+  [1125, 1150].forEach((sx, i) => {
+    ctx.fillStyle = i === 0 ? '#e63946' : '#2a9d8f';
+    ctx.beginPath();
+    ctx.moveTo(sx, 65);
+    ctx.lineTo(sx + 14, 65);
+    ctx.lineTo(sx + 14, 92);
+    ctx.lineTo(sx + 22, 98);
+    ctx.lineTo(sx + 18, 106);
+    ctx.lineTo(sx, 98);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(sx - 2, 63, 18, 6);
+  });
+  ctx.restore();
 
   // 6) 중앙 원형 베이지 러그 (그랜드 피아노 아래)
   ctx.save();
@@ -945,39 +1003,95 @@ function getFurnitureDrawables(noticeText) {
         ctx.restore();
       }
     },
-    // 3) 피아노 옆 미니 칠판 이젤 (sortY: 450)
+    // 3) 피아노 뒤 우측 크리스마스 트리 & 선물 상자들 (sortY: 270)
     {
-      id: 'furniture_easel',
-      sortY: 450,
+      id: 'furniture_xmas_tree',
+      sortY: 270,
       draw: (ctx) => {
         ctx.save();
-        const ex = 660;
-        const ey = 355;
-        // 이젤 다리
-        ctx.strokeStyle = '#7c4d28';
-        ctx.lineWidth = 5;
+        const tx = 745;
+        const ty = 210;
+
+        // 트리 바닥 그림자
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
         ctx.beginPath();
-        ctx.moveTo(ex + 20, ey + 70);
-        ctx.lineTo(ex + 10, ey + 108);
-        ctx.moveTo(ex + 105, ey + 70);
-        ctx.lineTo(ex + 115, ey + 108);
-        ctx.stroke();
-
-        // 보드 프레임
-        ctx.fillStyle = '#9c6334';
-        drawRoundedRect(ctx, ex, ey, 128, 82, 6);
-        ctx.fill();
-        ctx.fillStyle = '#273832';
-        drawRoundedRect(ctx, ex + 6, ey + 6, 116, 70, 4);
+        ctx.ellipse(tx + 30, ty + 95, 38, 14, 0, 0, Math.PI * 2);
         ctx.fill();
 
+        // 트리 나무 밑동 (화분)
+        ctx.fillStyle = '#8b4513';
+        ctx.fillRect(tx + 22, ty + 78, 16, 18);
+        ctx.fillStyle = '#a0522d';
+        ctx.fillRect(tx + 18, ty + 74, 24, 6);
+
+        // 3단 상록수
+        // 3단 (하단)
+        ctx.fillStyle = '#1e5631';
+        ctx.beginPath();
+        ctx.moveTo(tx - 6, ty + 76);
+        ctx.lineTo(tx + 66, ty + 76);
+        ctx.lineTo(tx + 30, ty + 42);
+        ctx.closePath();
+        ctx.fill();
+
+        // 2단 (중단)
+        ctx.fillStyle = '#2d6a4f';
+        ctx.beginPath();
+        ctx.moveTo(tx + 2, ty + 50);
+        ctx.lineTo(tx + 58, ty + 50);
+        ctx.lineTo(tx + 30, ty + 22);
+        ctx.closePath();
+        ctx.fill();
+
+        // 1단 (상단)
+        ctx.fillStyle = '#40916c';
+        ctx.beginPath();
+        ctx.moveTo(tx + 8, ty + 28);
+        ctx.lineTo(tx + 52, ty + 28);
+        ctx.lineTo(tx + 30, ty + 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // 트리 오너먼트 방울
+        const ornaments = [
+          { dx: 14, dy: 66, c: '#e63946' },
+          { dx: 34, dy: 70, c: '#ffd700' },
+          { dx: 48, dy: 64, c: '#48cae4' },
+          { dx: 20, dy: 42, c: '#f72585' },
+          { dx: 42, dy: 44, c: '#ffd700' },
+          { dx: 30, dy: 24, c: '#e63946' },
+        ];
+        ornaments.forEach((o) => {
+          ctx.fillStyle = o.c;
+          ctx.beginPath();
+          ctx.arc(tx + o.dx, ty + o.dy, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // 꼭대기 황금 별
+        ctx.fillStyle = '#ffd700';
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+        ctx.shadowBlur = 8;
+        ctx.font = '18px serif';
         ctx.textAlign = 'center';
-        ctx.fillStyle = '#f5ebd6';
-        ctx.font = '11px "Noto Sans KR", sans-serif';
-        ctx.fillText('♪ 오늘도 ♪', ex + 64, ey + 25);
-        ctx.fillText('좋은 음악, 좋은 사람들', ex + 64, ey + 44);
-        ctx.font = 'italic 11px Georgia, serif';
-        ctx.fillText('Hanwoori Choir', ex + 64, ey + 63);
+        ctx.fillText('★', tx + 30, ty + 2);
+        ctx.shadowBlur = 0;
+
+        // 트리 밑 선물 상자들
+        // 빨간 선물 상자
+        ctx.fillStyle = '#d90429';
+        ctx.fillRect(tx - 4, ty + 80, 16, 14);
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(tx + 3, ty + 80, 3, 14);
+        ctx.fillRect(tx - 4, ty + 85, 16, 3);
+
+        // 노란 선물 상자
+        ctx.fillStyle = '#ffb703';
+        ctx.fillRect(tx + 48, ty + 82, 14, 12);
+        ctx.fillStyle = '#e63946';
+        ctx.fillRect(tx + 53, ty + 82, 3, 12);
+        ctx.fillRect(tx + 48, ty + 86, 14, 3);
+
         ctx.restore();
       }
     },
@@ -1125,21 +1239,39 @@ function getFurnitureDrawables(noticeText) {
         ctx.textAlign = 'center';
         ctx.fillStyle = '#f7e6d0';
         ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
-        ctx.fillText('📌 공지사항', bx + 70, by + 16);
+        ctx.fillText('📌 오늘의 안건', bx + 70, by + 16);
 
-        // 보드 속 손글씨 문구 (원본 '오늘도 함께라서 좋은 우리 ♡' 또는 사회자 공지)
-        ctx.fillStyle = '#4a3525';
-        ctx.font = 'bold 13px "Noto Sans KR", sans-serif';
-        const lines = (noticeText || '오늘도 함께라서 좋은 우리 ♡').split('\n');
+        // 보드 속 손글씨 문구 ("배신자 이민우 20기 재가입 투표")
+        ctx.fillStyle = '#2b1810';
+        ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+        const defaultLines = ['오늘의 안건', '"배신자 이민우', '20기 재가입 투표"'];
+        const lines = noticeText ? noticeText.split('\n') : defaultLines;
         lines.slice(0, 4).forEach((line, idx) => {
-          ctx.fillText(line.slice(0, 11), bx + 70, by + 56 + idx * 24);
+          ctx.fillText(line, bx + 70, by + 56 + idx * 24);
         });
-        ctx.fillStyle = '#e06666';
-        ctx.fillText('♡ Hanwoori 20기 ♡', bx + 70, by + 144);
+        ctx.fillStyle = '#d90429';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText('🎄 Hanwoori 20기 🎄', bx + 70, by + 144);
         ctx.restore();
       }
     }
   ];
+}
+
+// 3.2.1 크리스마스 눈 내리는 효과 (Snowfall Particle FX)
+function drawChristmasSnow(ctx, time) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
+  for (let i = 0; i < 48; i++) {
+    const speed = 28 + (i % 6) * 14;
+    const x = ((i * 27 + Math.sin(time * 1.1 + i * 1.5) * 26) % MAP_WIDTH + MAP_WIDTH) % MAP_WIDTH;
+    const y = (i * 23 + time * speed) % MAP_HEIGHT;
+    const r = 1.2 + (i % 4) * 0.9;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 // 3.3 퀴즈방 (음악 퀴즈방 / 인물 퀴즈방) 전용 배경 및 함정 바닥(Trapdoor) 렌더러
@@ -1685,7 +1817,7 @@ export default function App() {
     autoMode: false,          // 사회자 자동 진행 여부
     trapdoorOpen: false,
     trapdoorProgress: 0,
-    noticeText: '오늘도\n함께라서\n좋은 우리 ♪',
+    noticeText: '오늘의 안건\n"배신자 이민우\n20기 재가입 투표"',
     scorePerCorrect: 10,
     winnerBonus: 50,
     lastWinnerName: '',
@@ -2487,6 +2619,9 @@ export default function App() {
             .sort((a, b) => a.y - b.y);
           sortedPlayers.forEach((p) => drawChibiAvatar(ctx, p, p.id === myId, time));
         }
+
+        // 로비 및 퀴즈방 전체 크리스마스 흩날리는 눈송이 파티클 FX
+        drawChristmasSnow(ctx, time);
       }
 
       animationFrameId = requestAnimationFrame(updateAndRender);
