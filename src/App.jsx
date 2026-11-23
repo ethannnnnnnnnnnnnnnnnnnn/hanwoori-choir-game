@@ -1500,7 +1500,7 @@ function drawChibiAvatar(ctx, player, isMe, time) {
   ctx.restore();
 
   // 9) 머리 위 이모티콘 버블 & 동적 참가자 닉네임 배지 (절대 배경에 고정되지 않은 실시간 레이어)
-  if (status !== 'falling') {
+  if (status !== 'falling' && player.nickname) {
     ctx.save();
     const tagY = y + bodyY - 68;
 
@@ -1532,6 +1532,45 @@ function drawChibiAvatar(ctx, player, isMe, time) {
     ctx.fillText(displayNick, x, tagY + 0.5);
     ctx.restore();
   }
+}
+
+// 3.5 아바타 선택용 실물 미니 캔버스 컴포넌트
+function AvatarThumbnail({ avatarId, size = 64 }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+
+    ctx.save();
+    // 캔버스 크기에 맞춰 캐릭터 스케일 조절 (원본 높이 약 75px)
+    const scale = size / 75;
+    ctx.scale(scale, scale);
+
+    const mockPlayer = {
+      avatarId,
+      x: 37.5,
+      y: 67,
+      dir: 'down',
+      isMoving: false,
+      status: 'alive',
+      nickname: '', // 닉네임 배지 없이 순수 캐릭터 렌더링
+      seed: 0
+    };
+    drawChibiAvatar(ctx, mockPlayer, false, 0);
+    ctx.restore();
+  }, [avatarId, size]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={size}
+      height={size}
+      className="mx-auto block pointer-events-none drop-shadow"
+    />
+  );
 }
 
 // ==========================================
@@ -2971,7 +3010,12 @@ export default function App() {
               {/* 3) 내 닉네임(이름) 변경만 깔끔하게 제공 */}
               <form onSubmit={handleUpdateMyName} className="flex flex-col justify-between gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-stone-400">내 닉네임(이름) 변경</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-7 h-7 rounded-lg bg-stone-950 border border-stone-800 flex items-center justify-center overflow-hidden">
+                      <AvatarThumbnail avatarId={myAvatarId} size={36} />
+                    </div>
+                    <span className="text-xs font-bold text-stone-300">내 닉네임(이름)</span>
+                  </div>
                   {myPhoneLast4 && (
                     <span className="text-[11px] text-amber-300 font-medium">
                       📱 뒷번호 {myPhoneLast4}
@@ -3321,26 +3365,53 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-amber-300">
-                  3. 내 캐릭터 아바타 선택
-                </label>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-1 bg-stone-950 rounded-xl border border-stone-800">
-                  {AVATAR_PRESETS.map((av) => (
-                    <button
-                      key={av.id}
-                      type="button"
-                      onClick={() => setLoginAvatarId(av.id)}
-                      className={`p-2 rounded-lg text-center transition border text-xs font-semibold ${
-                        loginAvatarId === av.id
-                          ? 'bg-amber-500 text-stone-950 border-white shadow-md scale-95 font-bold'
-                          : 'bg-stone-900 hover:bg-stone-800 text-stone-300 border-stone-800'
-                      }`}
-                    >
-                      <div className="text-base mb-0.5">👤</div>
-                      <div className="truncate text-[11px]">{av.name.replace(/^[0-9★🎼\.\s]+/, '')}</div>
-                    </button>
-                  ))}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-amber-300">
+                    3. 내 캐릭터 아바타 선택
+                  </label>
+                  <span className="text-[11px] text-amber-400 font-semibold">
+                    {AVATAR_PRESETS.find((a) => a.id === loginAvatarId)?.name}
+                  </span>
+                </div>
+
+                {/* 선택된 아바타 실물 하이라이트 미리보기 */}
+                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-stone-950 border border-amber-500/40">
+                  <div className="w-16 h-16 rounded-xl bg-stone-900 border border-stone-800 flex items-center justify-center shrink-0">
+                    <AvatarThumbnail avatarId={loginAvatarId} size={64} />
+                  </div>
+                  <div className="flex-1 text-xs">
+                    <div className="font-bold text-amber-200 text-sm">
+                      {AVATAR_PRESETS.find((a) => a.id === loginAvatarId)?.name}
+                    </div>
+                    <p className="text-[11px] text-stone-400">
+                      로비와 퀴즈방에서 실제로 움직이는 내 귀여운 SD 캐릭터입니다!
+                    </p>
+                  </div>
+                </div>
+
+                {/* 아바타 18종 실물 그리드 (실제 게임 화면 캐릭터 렌더링) */}
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-44 overflow-y-auto p-1.5 bg-stone-950 rounded-2xl border border-stone-800">
+                  {AVATAR_PRESETS.map((av) => {
+                    const isSelected = loginAvatarId === av.id;
+                    return (
+                      <button
+                        key={av.id}
+                        type="button"
+                        onClick={() => setLoginAvatarId(av.id)}
+                        className={`p-1.5 rounded-xl text-center transition border flex flex-col items-center justify-center ${
+                          isSelected
+                            ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/50 shadow-md scale-95'
+                            : 'bg-stone-900/90 hover:bg-stone-800 border-stone-800 text-stone-300'
+                        }`}
+                      >
+                        <AvatarThumbnail avatarId={av.id} size={48} />
+                        <div className={`truncate text-[10px] mt-0.5 w-full font-bold ${isSelected ? 'text-amber-300' : 'text-stone-300'}`}>
+                          {av.name.replace(/^[0-9★🎼\.\s]+/, '')}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
