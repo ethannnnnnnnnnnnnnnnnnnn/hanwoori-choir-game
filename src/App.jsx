@@ -586,40 +586,27 @@ function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
     ctx.fill();
   }
 
-  // 칠판 텍스트 (삼성 한우리 합창단 20기 메인 타이틀)
+  // 칠판 상단 나무 프레임에 소복이 쌓인 눈꽃 캡 (Snow Cap)
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(boardX - 8, boardY - 6);
+  for (let sx = boardX - 8; sx <= boardX + boardW + 8; sx += 20) {
+    ctx.lineTo(sx + 10, boardY - 6 + (Math.sin(sx * 0.2) > 0 ? 5 : 1));
+  }
+  ctx.lineTo(boardX + boardW + 8, boardY - 10);
+  ctx.lineTo(boardX - 8, boardY - 10);
+  ctx.closePath();
+  ctx.fill();
+
+  // 칠판 텍스트 ('삼성 한우리 합창단 20기' 단독 정중앙 메인 타이틀)
   ctx.save();
   ctx.textAlign = 'center';
   ctx.fillStyle = '#fff9e6';
-  ctx.shadowColor = 'rgba(255, 220, 120, 0.55)';
-  ctx.shadowBlur = 10;
-  ctx.font = 'bold 32px "Noto Serif KR", "Georgia", serif';
-  ctx.fillText('삼성 한우리 합창단 20기', boardX + boardW / 2, boardY + 92);
+  ctx.shadowColor = 'rgba(255, 215, 0, 0.85)';
+  ctx.shadowBlur = 14;
+  ctx.font = 'bold 38px "Noto Serif KR", "Georgia", serif';
+  ctx.fillText('삼성 한우리 합창단 20기', boardX + boardW / 2, boardY + 115);
   ctx.shadowBlur = 0;
-
-  ctx.font = '16px "Noto Sans KR", sans-serif';
-  ctx.fillStyle = 'rgba(255, 235, 200, 0.9)';
-  ctx.fillText('🎄 2024 송년의 밤 & 메리 크리스마스 🎵', boardX + boardW / 2, boardY + 138);
-
-  // 칠판 우측 서브 문구 (- Hanwoori - 제거됨)
-  ctx.textAlign = 'left';
-  ctx.font = '13px "Noto Serif KR", serif';
-  ctx.fillStyle = 'rgba(235, 245, 235, 0.85)';
-  ctx.fillText('좋은 목소리는', boardX + boardW - 110, boardY + 92);
-  ctx.fillText('좋은 마음에서 ♪', boardX + boardW - 110, boardY + 115);
-
-  // 칠판 좌측 오선지 & 음표 그림
-  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-  ctx.lineWidth = 1.5;
-  for (let s = 0; s < 3; s++) {
-    ctx.beginPath();
-    ctx.moveTo(boardX + 24, boardY + 75 + s * 12);
-    ctx.quadraticCurveTo(boardX + 65, boardY + 65 + s * 12, boardX + 105, boardY + 85 + s * 12);
-    ctx.stroke();
-  }
-  ctx.font = '26px serif';
-  ctx.fillStyle = 'rgba(255,248,225,0.85)';
-  ctx.fillText('♫', boardX + 35, boardY + 88);
-  ctx.fillText('♪', boardX + 75, boardY + 115);
   ctx.restore();
 
   // 칠판 좌측 위 선반 & 고양이 (귀여운 산타 모자)
@@ -695,14 +682,20 @@ function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
   });
   ctx.restore();
 
-  // 6) 중앙 원형 베이지 러그 (그랜드 피아노 아래)
+  // 6) 중앙 원형 크리스마스 버건디 러그 (그랜드 피아노 아래)
   ctx.save();
   ctx.beginPath();
   ctx.ellipse(545, 415, 185, 85, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#ead7c3';
+  ctx.fillStyle = '#8b2635'; // 화사한 크리스마스 와인 레드
   ctx.fill();
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = '#d4b89b';
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#ffd166'; // 따뜻한 골드 테두리
+  ctx.stroke();
+  // 러그 내부 금빛 원
+  ctx.beginPath();
+  ctx.ellipse(545, 415, 155, 70, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255, 209, 102, 0.45)';
+  ctx.lineWidth = 2;
   ctx.stroke();
   ctx.restore();
 
@@ -710,41 +703,42 @@ function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
   ctx.save();
   ctx.beginPath();
   ctx.ellipse(180, 685, 165, 92, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#e8d4be';
+  ctx.fillStyle = '#2d5a3f'; // 크리스마스 포레스트 그린
   ctx.fill();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = '#cba885';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#ffd166';
   ctx.stroke();
   ctx.font = '42px serif';
-  ctx.fillStyle = 'rgba(166, 124, 82, 0.35)';
+  ctx.fillStyle = 'rgba(255, 209, 102, 0.5)';
   ctx.fillText('𝄞', 75, 710);
   ctx.restore();
 
-  // 8) 하단 중앙 Welcome 매트 (Welcome! Hanwoori Choir 20기)
+  // 8) 하단 중앙 Welcome 매트 (삼성 한우리 합창단 20기)
   const matX = 415;
   const matY = 640;
   const matW = 370;
   const matH = 115;
   ctx.save();
-  ctx.fillStyle = '#c8a987';
+  ctx.fillStyle = '#7a1f2d';
   drawRoundedRect(ctx, matX - 8, matY - 8, matW + 16, matH + 16, 8);
   ctx.fill();
-  ctx.fillStyle = '#916e4b';
+  ctx.fillStyle = '#1e4d34';
   drawRoundedRect(ctx, matX, matY, matW, matH, 4);
   ctx.fill();
-  ctx.strokeStyle = '#e6ccb2';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#ffd166';
+  ctx.lineWidth = 3;
   ctx.strokeRect(matX + 8, matY + 8, matW - 16, matH - 16);
 
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#f7e6d0';
-  ctx.font = 'italic bold 32px "Georgia", serif';
-  ctx.fillText('Welcome!', matX + matW / 2, matY + 52);
-  ctx.font = 'bold 19px "Georgia", "Noto Sans KR", serif';
-  ctx.fillText('Hanwoori Choir 20기', matX + matW / 2, matY + 88);
-  ctx.font = '28px serif';
-  ctx.fillText('𝄞', matX + 42, matY + 68);
-  ctx.fillText('♬', matX + matW - 42, matY + 68);
+  ctx.fillStyle = '#fff9e6';
+  ctx.font = 'bold 28px "Georgia", "Noto Serif KR", serif';
+  ctx.fillText('🎄 Merry Christmas! 🎄', matX + matW / 2, matY + 52);
+  ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = '#ffd166';
+  ctx.fillText('삼성 한우리 합창단 20기', matX + matW / 2, matY + 88);
+  ctx.font = '26px serif';
+  ctx.fillText('❄️', matX + 42, matY + 68);
+  ctx.fillText('❄️', matX + matW - 42, matY + 68);
   ctx.restore();
 
   // 9) 왼쪽 음악 퀴즈방 아치형 포털 (파스텔 핑크)
@@ -1258,18 +1252,26 @@ function getFurnitureDrawables(noticeText) {
   ];
 }
 
-// 3.2.1 크리스마스 눈 내리는 효과 (Snowfall Particle FX)
+// 3.2.1 크리스마스 눈 내리는 효과 (화이트 크리스마스 풍성한 눈송이 FX)
 function drawChristmasSnow(ctx, time) {
   ctx.save();
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
-  for (let i = 0; i < 48; i++) {
-    const speed = 28 + (i % 6) * 14;
-    const x = ((i * 27 + Math.sin(time * 1.1 + i * 1.5) * 26) % MAP_WIDTH + MAP_WIDTH) % MAP_WIDTH;
-    const y = (i * 23 + time * speed) % MAP_HEIGHT;
-    const r = 1.2 + (i % 4) * 0.9;
+  for (let i = 0; i < 68; i++) {
+    const speed = 25 + (i % 7) * 12;
+    const x = ((i * 29 + Math.sin(time * 0.9 + i * 1.6) * 32) % MAP_WIDTH + MAP_WIDTH) % MAP_WIDTH;
+    const y = (i * 21 + time * speed) % MAP_HEIGHT;
+    const isBig = i % 5 === 0;
+    const r = isBig ? 2.8 : 1.4 + (i % 3) * 0.6;
+    ctx.fillStyle = isBig ? 'rgba(255, 255, 255, 0.88)' : 'rgba(255, 255, 255, 0.65)';
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
+    // 큰 눈송이는 부드러운 반짝임 블러
+    if (isBig) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.beginPath();
+      ctx.arc(x, y, r * 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   ctx.restore();
 }
@@ -1959,26 +1961,32 @@ export default function App() {
         });
 
         setPlayers((prev) => {
-          // 원격에 있는 플레이어들과 로컬 플레이어 병합
           const map = new Map();
           // 1. 봇이 활성화되어 있을 때만 기존 봇 유지
           if (botsEnabled) {
             prev.filter((p) => p.isBot).forEach((bot) => map.set(bot.id, bot));
           }
-          // 2. 원격 플레이어 적용 (실제 로그인한 단원들)
+
+          // 2. 원격 플레이어 적용 (동일 닉네임 중복 완벽 제거 & 내 캐릭터 단일화)
           remotePlayers.forEach((rp) => {
-            if (rp.id === myId) {
-              // 내 캐릭터는 로컬의 빠른 이동을 유지하되 점수/상태 등 서버 변경사항 동기화
-              const current = prev.find((p) => p.id === myId) || rp;
+            const isMe = rp.id === myId || (myNickname && rp.nickname === myNickname);
+            if (isMe) {
+              const current = prev.find((p) => p.id === myId || p.nickname === myNickname) || rp;
               map.set(myId, {
                 ...current,
+                id: myId,
+                nickname: myNickname || rp.nickname,
                 score: rp.score !== undefined ? rp.score : current.score,
                 wins: rp.wins !== undefined ? rp.wins : current.wins,
                 correctCount: rp.correctCount !== undefined ? rp.correctCount : current.correctCount,
                 status: rp.status || current.status,
               });
             } else {
-              map.set(rp.id, rp);
+              // 다른 단원: 동일 닉네임 중복 제거 (가장 최근 1개만 유지)
+              const existingWithSameNick = Array.from(map.values()).find((p) => p.nickname === rp.nickname);
+              if (!existingWithSameNick) {
+                map.set(rp.id, rp);
+              }
             }
           });
           return Array.from(map.values());
@@ -1987,7 +1995,7 @@ export default function App() {
       (err) => console.warn('Firestore players snapshot warning:', err)
     );
     return () => unsub();
-  }, [user, myId, botsEnabled]);
+  }, [user, myId, myNickname, botsEnabled]);
 
   // ==========================================
   // 6. COLLISION DETECTION & MOVEMENT ENGINE
@@ -2090,9 +2098,11 @@ export default function App() {
     } catch (err) {}
 
     setPlayers((prev) => {
-      const existing = prev.find((p) => p.id === playerId);
+      // 내 닉네임과 일치하는 과거/임시 캐릭터 전부 청소 후 내 캐릭터 1개만 등록
+      const filtered = prev.filter((p) => p.id !== playerId && p.nickname !== finalNick);
+      const existing = prev.find((p) => p.id === playerId || p.nickname === finalNick);
       const myData = existing
-        ? { ...existing, nickname: finalNick, avatarId: assignedAvatarId }
+        ? { ...existing, id: playerId, nickname: finalNick, avatarId: assignedAvatarId, lastActive: Date.now() }
         : {
             id: playerId,
             nickname: finalNick,
@@ -2113,17 +2123,15 @@ export default function App() {
             wins: 0,
             gamesPlayed: 1,
             emote: '🎵',
-            seed: Math.random() * 10
+            seed: Math.random() * 10,
+            lastActive: Date.now()
           };
 
       if (broadcastRef.current) {
         broadcastRef.current.postMessage({ type: 'SYNC_PLAYER_MOVE', payload: myData });
       }
       syncPlayerToFirestore(myData, true);
-      const nextList = existing
-        ? prev.map((p) => (p.id === playerId ? myData : p))
-        : [...prev, myData];
-      return nextList;
+      return [...filtered, myData];
     });
 
     if (member.isAdmin) {
@@ -2846,7 +2854,7 @@ export default function App() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-sm sm:text-base text-amber-100 tracking-tight">
-                Hanwoori Choir 20기 송년회 파티
+                삼성 한우리 합창단 20기 송년회 🎄
               </h1>
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
                 실시간 {players.length}명 접속중
@@ -3545,10 +3553,10 @@ export default function App() {
                 <Music className="w-8 h-8 text-stone-950" />
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-amber-100 tracking-tight">
-                Hanwoori Choir 20기
+                삼성 한우리 합창단 20기
               </h2>
-              <p className="text-xs sm:text-sm text-stone-300 font-medium">
-                ✨ 송년회 파티 게임 입장 ✨
+              <p className="text-xs sm:text-sm text-amber-300 font-bold">
+                🎄 2024 송년의 밤 & 크리스마스 파티 🎄
               </p>
               <p className="text-[11px] text-stone-400">
                 본인 이름과 휴대폰 뒷번호 4자리를 입력하고 입장해주세요.
