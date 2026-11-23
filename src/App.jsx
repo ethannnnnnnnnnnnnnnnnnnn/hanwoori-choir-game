@@ -79,9 +79,11 @@ const OFFICIAL_MEMBERS = [
   { no: 15, name: '김다솔', shortName: '다솔', phone: '1208', avatarId: 'dasol', isAdmin: false },
   { no: 16, name: '김석준', shortName: '석준', phone: '2918', avatarId: 'conductor', isAdmin: true }, // 관리자
   { no: 17, name: '이민우', shortName: '민우', phone: '4637', avatarId: 'minwoo', isAdmin: false },
+  { no: 18, name: '이대건', shortName: '대건', phone: '0222', avatarId: 'daegeon', isAdmin: false },
+  { no: 19, name: '이상언', shortName: '상언', phone: '4015', avatarId: 'sangeon', isAdmin: false },
 ];
 
-// 한우리 합창단 20기 공식 단원 17명 SD 캐릭터 프리셋
+// 한우리 합창단 20기 공식 단원 19명 SD 캐릭터 프리셋
 const AVATAR_PRESETS = [
   { id: 'yejin', name: '1. 최예진', defaultNick: '최예진', hair: 'wavy_long', hairColor: '#b88658', outfit: '#e8d8c8', bottom: '#5c4636', acc: 'ribbon', skin: '#ffe8dc' },
   { id: 'jua', name: '2. 송주아', defaultNick: '송주아', hair: 'twintail', hairColor: '#e87a90', outfit: '#f4a7b9', bottom: '#3b4254', acc: 'hairpin', skin: '#ffeaf0' },
@@ -100,6 +102,8 @@ const AVATAR_PRESETS = [
   { id: 'dasol', name: '15. 김다솔', defaultNick: '김다솔', hair: 'wavy_long', hairColor: '#7c4d28', outfit: '#d8f3dc', bottom: '#2d6a4f', acc: 'flower', skin: '#ffe8dc' },
   { id: 'conductor', name: '16. 김석준 (관리자)', defaultNick: '김석준', hair: 'short_parted', hairColor: '#3a2618', outfit: '#f5efe6', bottom: '#2b2b2b', acc: 'baton', skin: '#ffe4d6' },
   { id: 'minwoo', name: '17. 이민우', defaultNick: '이민우', hair: 'neat_boy', hairColor: '#2b2430', outfit: '#3e4a61', bottom: '#1f2430', acc: 'bowtie', skin: '#ffe2d1' },
+  { id: 'daegeon', name: '18. 이대건', defaultNick: '이대건', hair: 'short_parted', hairColor: '#362b28', outfit: '#3b5249', bottom: '#1f2421', acc: 'badge', skin: '#ffe4d6' },
+  { id: 'sangeon', name: '19. 이상언', defaultNick: '이상언', hair: 'parted_boy', hairColor: '#1e2430', outfit: '#e9ecef', bottom: '#343a40', acc: 'collar', skin: '#ffe2d1' },
 ];
 
 // 음악실 로비 내 가구 충돌 박스 및 Y-Sorting(깊이 정렬) 기준선 정의
@@ -3389,7 +3393,7 @@ export default function App() {
                   <label className="text-xs font-bold text-amber-300">
                     1. 본인 이름 (단원 선택 또는 입력)
                   </label>
-                  <span className="text-[10px] text-stone-400">총 17명 등록됨</span>
+                  <span className="text-[10px] text-stone-400">총 {OFFICIAL_MEMBERS.length}명 등록됨</span>
                 </div>
 
                 {/* 단원 빠른 선택 칩 목록 */}
