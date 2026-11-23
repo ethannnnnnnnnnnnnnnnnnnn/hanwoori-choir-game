@@ -423,195 +423,20 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
 let lobbyBgImage = null;
 if (typeof window !== 'undefined') {
   lobbyBgImage = new Image();
-  lobbyBgImage.src = `${import.meta.env.BASE_URL}lobby_bg.jpg`;
+  lobbyBgImage.src = `${import.meta.env.BASE_URL}lobby_bg.jpg?v=20261124_clean`;
 }
 
-// 3.1 배경 레이어 (원본 고화질 일러스트 + 요청된 정밀 패치 & 크리스마스 테마 렌더러)
+// 3.1 배경 레이어 (원본 고화질 일러스트 원본 유지 & 알록달록 크리스마스 LED 전구 연출)
 function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
   const isImageLoaded = lobbyBgImage && lobbyBgImage.complete && lobbyBgImage.naturalWidth > 0;
 
   if (isImageLoaded) {
-    // 1. 고화질 원본 일러스트 배경 렌더링 (1200 x 800)
+    // 1. 고화질 클린 일러스트 배경 렌더링 (1200 x 800)
+    // 원본 이미지 자체에 '삼성 한우리 합창단 20기', 공지사항('배신자 이민우...'), 지워진 이젤/벽면이 감쪽같이 반영되어 있으므로
+    // 투박한 단색 fillRect 패치를 일절 칠하지 않고 고화질 원본 그대로 표시합니다!
     ctx.drawImage(lobbyBgImage, 0, 0, MAP_WIDTH, MAP_HEIGHT);
 
-    // 2. [패치 1] 상단 칠판 메인 타이틀 패치 ('삼성 한우리 합창단 20기' 단독, -Hanwoori- 완전 제거)
-    // 원본 칠판 내부 텍스트 영역(335~840, 38~188)을 칠판 초록색으로 자연스럽게 덮음
-    ctx.save();
-    ctx.fillStyle = '#233d32';
-    drawRoundedRect(ctx, 335, 38, 500, 150, 4);
-    ctx.fill();
-
-    // 칠판 상단 나무 프레임에 소복이 쌓인 눈꽃 캡 (Snow Cap)
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(330, 16);
-    for (let sx = 330; sx <= 840; sx += 20) {
-      ctx.lineTo(sx + 10, 16 + (Math.sin(sx * 0.2) > 0 ? 5 : 1));
-    }
-    ctx.lineTo(840, 12);
-    ctx.lineTo(330, 12);
-    ctx.closePath();
-    ctx.fill();
-
-    // 칠판 상단 중앙 크리스마스 리스 (Wreath)
-    const wx = 585;
-    const wy = 22;
-    ctx.beginPath();
-    ctx.arc(wx, wy, 24, 0, Math.PI * 2);
-    ctx.strokeStyle = '#1d5432';
-    ctx.lineWidth = 14;
-    ctx.stroke();
-    // 리스 빨간 베리
-    ctx.fillStyle = '#e63946';
-    [[-16, 0], [16, 0], [0, 16], [-11, 11], [11, 11]].forEach(([dx, dy]) => {
-      ctx.beginPath();
-      ctx.arc(wx + dx, wy + dy, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    // 리스 상단 빨간 리본
-    ctx.fillStyle = '#d90429';
-    ctx.beginPath();
-    ctx.ellipse(wx - 7, wy - 14, 8, 5, -0.4, 0, Math.PI * 2);
-    ctx.ellipse(wx + 7, wy - 14, 8, 5, 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillRect(wx - 3, wy - 16, 6, 6);
-
-    // 칠판 텍스트 ('삼성 한우리 합창단 20기' 단독 정중앙 메인 타이틀)
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#fff9e6';
-    ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
-    ctx.shadowBlur = 14;
-    ctx.font = 'bold 36px "Noto Serif KR", "Georgia", serif';
-    ctx.fillText('삼성 한우리 합창단 20기', 585, 115);
-    ctx.shadowBlur = 0;
-    ctx.restore();
-
-    // 3. [패치 2] 피아노 옆 이젤 게시판 지우기 (X: 645~785, Y: 400~525)
-    // 피아노 우측 바닥과 피아노 러그를 자연스럽게 복원하고 아기자기한 크리스마스 선물 상자 더미 배치!
-    ctx.save();
-    // 바닥 러그 & 마루 패치 (이젤 완전 덮기)
-    ctx.fillStyle = '#d6bfa8';
-    ctx.beginPath();
-    ctx.ellipse(690, 445, 68, 48, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#b6804d';
-    ctx.beginPath();
-    ctx.ellipse(715, 485, 55, 32, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 이젤 자리에 예쁜 크리스마스 선물 상자들 (이젤 글씨 완전 덮음!)
-    const bx = 675;
-    const by = 435;
-    // 빨간 큰 선물 상자
-    ctx.fillStyle = '#d90429';
-    drawRoundedRect(ctx, bx, by, 48, 42, 6);
-    ctx.fill();
-    ctx.fillStyle = '#ffd700';
-    ctx.fillRect(bx + 21, by, 6, 42);
-    ctx.fillRect(bx, by + 18, 48, 6);
-    // 빨간 리본 나비매듭
-    ctx.beginPath();
-    ctx.ellipse(bx + 18, by - 4, 7, 5, -0.4, 0, Math.PI * 2);
-    ctx.ellipse(bx + 30, by - 4, 7, 5, 0.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 노란 미니 선물 상자
-    ctx.fillStyle = '#ffb703';
-    drawRoundedRect(ctx, bx + 42, by + 12, 34, 30, 4);
-    ctx.fill();
-    ctx.fillStyle = '#2b9348';
-    ctx.fillRect(bx + 56, by + 12, 5, 30);
-    ctx.fillRect(bx + 42, by + 24, 34, 5);
-
-    // 에메랄드 작은 선물 상자
-    ctx.fillStyle = '#2d6a4f';
-    drawRoundedRect(ctx, bx - 18, by + 16, 28, 26, 4);
-    ctx.fill();
-    ctx.fillStyle = '#ffd700';
-    ctx.fillRect(bx - 6, by + 16, 4, 26);
-    ctx.restore();
-
-    // 4. [패치 3] 인물퀴즈방 옆 튀어나간 'Music People Together Hanwoori' 보드 지우기 (X: 1115~1195, Y: 70~250)
-    ctx.save();
-    // 주변 벽면 색상으로 깨끗하게 덮기
-    ctx.fillStyle = '#e8d4be';
-    ctx.fillRect(1115, 65, 85, 185);
-    ctx.fillStyle = '#c8a88c';
-    ctx.fillRect(1115, 230, 85, 14); // 몰딩 라인 복원
-
-    // 대신 벽면에 예쁜 크리스마스 산타 양말 2개 걸기
-    [1130, 1160].forEach((sx, i) => {
-      ctx.fillStyle = i === 0 ? '#e63946' : '#2a9d8f';
-      ctx.beginPath();
-      ctx.moveTo(sx, 100);
-      ctx.lineTo(sx + 15, 100);
-      ctx.lineTo(sx + 15, 130);
-      ctx.lineTo(sx + 24, 137);
-      ctx.lineTo(sx + 20, 147);
-      ctx.lineTo(sx, 138);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(sx - 2, 97, 19, 7);
-    });
-    ctx.restore();
-
-    // 5. [패치 4] 공지사항 보드 문구 (우하단 X: 1045~1170, Y: 660~780)
-    ctx.save();
-    const nx = 1045;
-    const ny = 660;
-    // 종이 배경 깨끗하게 덮기
-    ctx.fillStyle = '#f5e9d9';
-    drawRoundedRect(ctx, nx, ny, 125, 115, 6);
-    ctx.fill();
-    ctx.strokeStyle = '#d4bba2';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // 상단 '오늘의 안건' 타이틀
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#78350f';
-    ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
-    ctx.fillText('📌 오늘의 안건', nx + 62, ny + 20);
-
-    // 본문 손글씨 문구 ("배신자 이민우 20기 재가입 투표")
-    ctx.fillStyle = '#1c1917';
-    ctx.font = 'bold 13px "Noto Sans KR", sans-serif';
-    ctx.fillText('오늘의 안건', nx + 62, ny + 46);
-    ctx.fillText('"배신자 이민우', nx + 62, ny + 68);
-    ctx.fillText('20기 재가입 투표"', nx + 62, ny + 90);
-
-    ctx.fillStyle = '#d90429';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillText('🎄 Hanwoori 20기 🎄', nx + 62, ny + 110);
-    ctx.restore();
-
-    // 6. [패치 5] 하단 중앙 매트 문구
-    ctx.save();
-    const matX = 415;
-    const matY = 640;
-    const matW = 370;
-    const matH = 115;
-    ctx.fillStyle = '#1e4d34';
-    drawRoundedRect(ctx, matX, matY, matW, matH, 6);
-    ctx.fill();
-    ctx.strokeStyle = '#ffd166';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(matX + 8, matY + 8, matW - 16, matH - 16);
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#fff9e6';
-    ctx.font = 'bold 28px "Georgia", "Noto Serif KR", serif';
-    ctx.fillText('🎄 Merry Christmas! 🎄', matX + matW / 2, matY + 52);
-    ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
-    ctx.fillStyle = '#ffd166';
-    ctx.fillText('삼성 한우리 합창단 20기', matX + matW / 2, matY + 88);
-    ctx.font = '26px serif';
-    ctx.fillText('❄️', matX + 42, matY + 68);
-    ctx.fillText('❄️', matX + matW - 42, matY + 68);
-    ctx.restore();
-
-    // 7. [패치 6] 상단 전체 알록달록 반짝이는 LED 크리스마스 전구 스트링 (0 ~ 1200)
+    // 2. 상단 전체 알록달록 반짝이는 LED 크리스마스 전구 스트링 (0 ~ 1200)
     ctx.save();
     const bulbColors = ['#ff4d4d', '#2ecc71', '#ffd700', '#ffffff', '#ff7675', '#00cec9'];
     for (let x = 15; x < MAP_WIDTH - 15; x += 36) {
@@ -631,7 +456,7 @@ function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
     }
     ctx.restore();
 
-    return; // 원본 이미지 및 패치 렌더링 완료!
+    return; // 원본 이미지 렌더링 완료!
   }
 
   // 1) 전체 바닥 (따뜻한 파스텔 원목 마루 - 폴백)
@@ -2076,6 +1901,29 @@ export default function App() {
     [players, myId]
   );
 
+  // 현재 접속 중인 활성 플레이어 목록 (예진봇/과거 유령 세션 원천 차단 & 닉네임 유일성 보장)
+  const activePlayers = useMemo(() => {
+    const now = Date.now();
+    const map = new Map();
+    players.forEach((p) => {
+      // 1. 봇 비활성 시 모든 봇 완전 차단
+      if (p.isBot && !botsEnabled) return;
+      // 2. 닉네임 없는 더미 차단
+      if (!p.nickname) return;
+      // 3. 내 자신은 로그인 완료 전까지 렌더링 제외 (스크린 모드 제외)
+      if (p.id === myId && !hasJoined && viewMode !== 'screen') return;
+      // 4. 내 자신이 아닌 다른 세션은 40초 이상 비활성이면 오프라인 간주하여 배제 (유령 예진 완벽 차단!)
+      if (p.id !== myId && p.lastActive && (now - p.lastActive > 40000)) return;
+
+      // 5. 동일 닉네임은 무조건 최신 활동 세션 1개만 허용
+      const existing = map.get(p.nickname);
+      if (!existing || (p.lastActive || 0) > (existing.lastActive || 0)) {
+        map.set(p.nickname, p);
+      }
+    });
+    return Array.from(map.values());
+  }, [players, botsEnabled, myId, hasJoined, viewMode]);
+
   // ==========================================
   // 5. FIREBASE & MULTI-TAB REALTIME SYNC
   // ==========================================
@@ -2172,9 +2020,21 @@ export default function App() {
     const unsub = onSnapshot(
       playersColRef,
       (snap) => {
+        const now = Date.now();
         const remotePlayers = [];
         snap.forEach((docSnap) => {
-          remotePlayers.push(docSnap.data());
+          const data = docSnap.data();
+          // 1. 관리자가 봇을 활성화하지 않았는데 봇 문서가 남아있으면 Firestore에서 즉시 영구 삭제
+          if (data.isBot && !botsEnabled) {
+            deleteDoc(doc(db, 'hanwoori_party_players', docSnap.id)).catch(() => {});
+            return;
+          }
+          // 2. 최근 45초 이상 비활성인 유령 세션(과거의 예진 등)은 Firestore에서 자동 삭제
+          if (data.id !== myId && data.lastActive && (now - data.lastActive > 45000)) {
+            deleteDoc(doc(db, 'hanwoori_party_players', docSnap.id)).catch(() => {});
+            return;
+          }
+          remotePlayers.push(data);
         });
 
         setPlayers((prev) => {
@@ -2197,6 +2057,7 @@ export default function App() {
                 wins: rp.wins !== undefined ? rp.wins : current.wins,
                 correctCount: rp.correctCount !== undefined ? rp.correctCount : current.correctCount,
                 status: rp.status || current.status,
+                lastActive: Date.now()
               });
             } else {
               // 다른 단원: 동일 닉네임 중복 제거 (가장 최근 1개만 유지)
@@ -2213,6 +2074,18 @@ export default function App() {
     );
     return () => unsub();
   }, [user, myId, myNickname, botsEnabled]);
+
+  // 내 활성 상태 주기적 하트비트 전송 (15초마다 lastActive 갱신)
+  useEffect(() => {
+    if (!hasJoined || !myId || !myNickname) return;
+    const interval = setInterval(() => {
+      const me = players.find((p) => p.id === myId);
+      if (me) {
+        syncPlayerToFirestore({ ...me, lastActive: Date.now() }, false);
+      }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [hasJoined, myId, myNickname, players, syncPlayerToFirestore]);
 
   // ==========================================
   // 6. COLLISION DETECTION & MOVEMENT ENGINE
@@ -2232,21 +2105,19 @@ export default function App() {
     return false;
   }, []);
 
-  // 로컬 스토리지에서 이전 로그인 정보 복원
+  // 로컬 스토리지에서 이전 입력 정보 복원 (자동 입장은 하지 않고 입력 필드 편의만 제공)
   useEffect(() => {
     try {
       const saved = localStorage.getItem('hanwoori_user_profile');
       if (saved) {
-        const { id, name, phone, avatarId } = JSON.parse(saved);
-        if (id && name) {
-          setMyId(id);
-          setMyNickname(name);
+        const { name, phone, avatarId } = JSON.parse(saved);
+        if (name) {
           setUserNameInput(name);
-          setMyPhoneLast4(phone || '');
           setPhoneLast4Input(phone || '');
-          setMyAvatarId(avatarId || 'yejin');
-          setLoginAvatarId(avatarId || 'yejin');
-          setHasJoined(true);
+          if (avatarId) {
+            setLoginAvatarId(avatarId);
+            setMyAvatarId(avatarId);
+          }
         }
       }
     } catch (e) {
@@ -2791,15 +2662,10 @@ export default function App() {
 
           // 2) Y-Sorting: 가구 오브젝트들과 참가자 아바타들을 Y좌표 기준으로 정렬하여 렌더링
           const furnitureList = getFurnitureDrawables(gameState.noticeText);
-          const visiblePlayers = players.filter((p) => {
-            if (p.isBot && !botsEnabled) return false;
-            if (p.id === myId && !hasJoined && viewMode !== 'screen') return false;
-            return true;
-          });
 
           const renderables = [
             ...furnitureList.map((f) => ({ type: 'furniture', sortY: f.sortY, draw: f.draw })),
-            ...visiblePlayers.map((p) => ({
+            ...activePlayers.map((p) => ({
               type: 'avatar',
               sortY: p.y,
               draw: (c) => drawChibiAvatar(c, p, p.id === myId, time)
@@ -2835,13 +2701,7 @@ export default function App() {
           // 퀴즈방 (음악 퀴즈방 / 인물 퀴즈방) 렌더링
           drawQuizRoomBackground(ctx, time, gameState, currentQuiz);
 
-          const sortedPlayers = [...players]
-            .filter((p) => {
-              if (p.isBot && !botsEnabled) return false;
-              if (p.id === myId && !hasJoined && viewMode !== 'screen') return false;
-              return true;
-            })
-            .sort((a, b) => a.y - b.y);
+          const sortedPlayers = [...activePlayers].sort((a, b) => a.y - b.y);
           sortedPlayers.forEach((p) => drawChibiAvatar(ctx, p, p.id === myId, time));
         }
 
@@ -2855,11 +2715,10 @@ export default function App() {
     animationFrameId = requestAnimationFrame(updateAndRender);
     return () => cancelAnimationFrame(animationFrameId);
   }, [
-    players,
+    activePlayers,
     gameState,
     currentQuiz,
     myId,
-    botsEnabled,
     showCollisionDebug,
     isPositionBlocked
   ]);
@@ -3274,10 +3133,10 @@ export default function App() {
               className="w-full h-full block object-contain"
             />
 
-            {/* 우상단 참가자 수 캡슐 (첨부 이미지 우상단 '참가자 16명' 배지 완벽 재현) */}
+            {/* 우상단 참가자 수 캡슐 (현재 실제 온라인 접속자만 정확히 카운트) */}
             <div className="absolute top-3 right-3 bg-stone-900/80 backdrop-blur-md border border-stone-600/60 px-3.5 py-1.5 rounded-full flex items-center gap-2 text-xs sm:text-sm font-bold text-stone-100 shadow-lg pointer-events-none">
               <Users className="w-4 h-4 text-amber-300" />
-              <span>참가자 {players.length}명</span>
+              <span>참가자 {activePlayers.length}명</span>
             </div>
 
             {/* 최후의 생존자 우승 발표 오버레이 */}
