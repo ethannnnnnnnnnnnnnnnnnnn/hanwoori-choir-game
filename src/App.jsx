@@ -1544,9 +1544,13 @@ export default function App() {
 
   // 참가자 본인 프로필 및 입장 상태
   const [hasJoined, setHasJoined] = useState(false);
-  const [myNickname, setMyNickname] = useState('예진');
+  const [userNameInput, setUserNameInput] = useState('');
+  const [phoneLast4Input, setPhoneLast4Input] = useState('');
+  const [loginAvatarId, setLoginAvatarId] = useState('yejin');
+  const [myNickname, setMyNickname] = useState('');
+  const [myPhoneLast4, setMyPhoneLast4] = useState('');
   const [myAvatarId, setMyAvatarId] = useState('yejin');
-  const [myId] = useState(() => 'p_' + Math.random().toString(36).slice(2, 9));
+  const [myId, setMyId] = useState(() => 'p_' + Math.random().toString(36).slice(2, 9));
 
   // Phase 1 검증용 디버그 오버레이 토글 (충돌 영역 / Y-Sorting 기준선 / 원본 구성 체크리스트)
   const [showCollisionDebug, setShowCollisionDebug] = useState(false);
@@ -1805,24 +1809,72 @@ export default function App() {
     return false;
   }, []);
 
-  // 참가자 최초 로비 입장 또는 프로필 변경
-  const handleEnterMusicRoom = (e) => {
+  // 로컬 스토리지에서 이전 로그인 정보 복원
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('hanwoori_user_profile');
+      if (saved) {
+        const { id, name, phone, avatarId } = JSON.parse(saved);
+        if (id && name) {
+          setMyId(id);
+          setMyNickname(name);
+          setUserNameInput(name);
+          setMyPhoneLast4(phone || '');
+          setPhoneLast4Input(phone || '');
+          setMyAvatarId(avatarId || 'yejin');
+          setLoginAvatarId(avatarId || 'yejin');
+          setHasJoined(true);
+        }
+      }
+    } catch (e) {
+      console.warn('Profile restore error:', e);
+    }
+  }, []);
+
+  // 로그인 화면에서 [이름 - 휴대폰 뒷번호] 입력 후 입장
+  const handleLoginSubmit = (e) => {
     if (e) e.preventDefault();
-    const cleanNick = myNickname.trim() || '한우리단원';
-    soundFX.playSelect();
+    const cleanName = userNameInput.trim();
+    const cleanPhone = phoneLast4Input.trim().slice(-4);
+
+    if (!cleanName) {
+      alert('본인 이름을 입력해주세요!');
+      return;
+    }
+    if (!cleanPhone || cleanPhone.length < 4) {
+      alert('휴대폰 뒷번호 4자리를 정확히 입력해주세요!');
+      return;
+    }
+
+    const playerId = `u_${cleanPhone}_${cleanName.replace(/[^a-zA-Z0-9가-힣]/g, '')}`;
+    setMyId(playerId);
+    setMyNickname(cleanName);
+    setMyPhoneLast4(cleanPhone);
+    setMyAvatarId(loginAvatarId);
+    setHasJoined(true);
+    soundFX.playFanfare();
+
+    try {
+      localStorage.setItem('hanwoori_user_profile', JSON.stringify({
+        id: playerId,
+        name: cleanName,
+        phone: cleanPhone,
+        avatarId: loginAvatarId
+      }));
+    } catch (err) {}
 
     setPlayers((prev) => {
-      const existing = prev.find((p) => p.id === myId);
+      const existing = prev.find((p) => p.id === playerId);
       const myData = existing
-        ? { ...existing, nickname: cleanNick, avatarId: myAvatarId }
+        ? { ...existing, nickname: cleanName, avatarId: loginAvatarId }
         : {
-            id: myId,
-            nickname: cleanNick,
-            avatarId: myAvatarId,
+            id: playerId,
+            nickname: cleanName,
+            avatarId: loginAvatarId,
             isBot: false,
             room: gameState.activeRoom,
-            x: 600,
-            y: 665,
+            x: 580 + (Math.random() * 60 - 30),
+            y: 650 + (Math.random() * 40 - 20),
             targetX: null,
             targetY: null,
             dir: 'up',
@@ -1837,25 +1889,57 @@ export default function App() {
             emote: '🎵',
             seed: Math.random() * 10
           };
-      const nextList = existing
-        ? prev.map((p) => (p.id === myId ? myData : p))
-        : [...prev, myData];
 
       if (broadcastRef.current) {
         broadcastRef.current.postMessage({ type: 'SYNC_PLAYER_MOVE', payload: myData });
       }
       syncPlayerToFirestore(myData, true);
+      const nextList = existing
+        ? prev.map((p) => (p.id === playerId ? myData : p))
+        : [...prev, myData];
       return nextList;
     });
-    setHasJoined(true);
   };
 
-  // 기본 입장 자동 처리 (즉시 테스트 편의)
-  useEffect(() => {
-    if (!hasJoined) {
-      handleEnterMusicRoom();
+  // 로비에서 내 이름만 즉시 수정
+  const handleUpdateMyName = (e) => {
+    if (e) e.preventDefault();
+    const cleanName = myNickname.trim();
+    if (!cleanName) return;
+    soundFX.playSelect();
+
+    try {
+      const saved = localStorage.getItem('hanwoori_user_profile');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        localStorage.setItem('hanwoori_user_profile', JSON.stringify({
+          ...parsed,
+          name: cleanName
+        }));
+      }
+    } catch (err) {}
+
+    setPlayers((prev) => {
+      const existing = prev.find((p) => p.id === myId);
+      if (!existing) return prev;
+      const updated = { ...existing, nickname: cleanName };
+      syncPlayerToFirestore(updated, true);
+      return prev.map((p) => (p.id === myId ? updated : p));
+    });
+    alert('이름이 성공적으로 변경되었습니다!');
+  };
+
+  // 다른 사람으로 로그인 (로그아웃)
+  const handleLogout = () => {
+    if (window.confirm('다른 사람으로 다시 로그인하시겠습니까?')) {
+      try {
+        localStorage.removeItem('hanwoori_user_profile');
+      } catch (e) {}
+      setHasJoined(false);
+      setUserNameInput('');
+      setPhoneLast4Input('');
     }
-  }, []);
+  };
 
   // 키보드 WASD / 방향키 이벤트 리스너
   useEffect(() => {
@@ -2788,9 +2872,9 @@ export default function App() {
           ========================================== */}
           {viewMode !== 'screen' && (
             <div className="w-full max-w-[1100px] mt-3 grid grid-cols-1 md:grid-cols-3 gap-2.5 bg-stone-900/90 border border-stone-800 p-3 rounded-2xl">
-              {/* 1) 모바일 가상 방향 패드 (터치 & 마우스 지원) */}
-              <div className="flex items-center justify-between sm:justify-start gap-4">
-                <div className="grid grid-cols-3 gap-1 w-32 h-32 bg-stone-950 p-1.5 rounded-2xl border border-stone-800">
+              {/* 1) 모바일 가상 방향 패드 (터치 & 마우스 지원, 안내문구 제거로 깔끔) */}
+              <div className="flex items-center justify-center">
+                <div className="grid grid-cols-3 gap-1.5 w-32 h-32 bg-stone-950 p-2 rounded-2xl border border-stone-800 shadow-inner">
                   <div />
                   <button
                     onMouseDown={() => handleJoystickMove(0, -1)}
@@ -2798,9 +2882,9 @@ export default function App() {
                     onMouseLeave={handleJoystickRelease}
                     onTouchStart={(e) => { e.preventDefault(); handleJoystickMove(0, -1); }}
                     onTouchEnd={handleJoystickRelease}
-                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center"
+                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center text-stone-200 transition"
                   >
-                    <ArrowUp className="w-5 h-5" />
+                    <ArrowUp className="w-6 h-6" />
                   </button>
                   <div />
                   <button
@@ -2809,9 +2893,9 @@ export default function App() {
                     onMouseLeave={handleJoystickRelease}
                     onTouchStart={(e) => { e.preventDefault(); handleJoystickMove(-1, 0); }}
                     onTouchEnd={handleJoystickRelease}
-                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center"
+                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center text-stone-200 transition"
                   >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-6 h-6" />
                   </button>
                   <div className="bg-stone-900 rounded-xl flex items-center justify-center text-[10px] text-stone-500 font-bold">
                     이동
@@ -2822,9 +2906,9 @@ export default function App() {
                     onMouseLeave={handleJoystickRelease}
                     onTouchStart={(e) => { e.preventDefault(); handleJoystickMove(1, 0); }}
                     onTouchEnd={handleJoystickRelease}
-                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center"
+                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center text-stone-200 transition"
                   >
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-6 h-6" />
                   </button>
                   <div />
                   <button
@@ -2833,26 +2917,11 @@ export default function App() {
                     onMouseLeave={handleJoystickRelease}
                     onTouchStart={(e) => { e.preventDefault(); handleJoystickMove(0, 1); }}
                     onTouchEnd={handleJoystickRelease}
-                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center"
+                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center text-stone-200 transition"
                   >
-                    <ArrowDown className="w-5 h-5" />
+                    <ArrowDown className="w-6 h-6" />
                   </button>
                   <div />
-                </div>
-
-                <div className="text-xs space-y-1.5 text-stone-300">
-                  <div className="font-bold text-amber-200 flex items-center gap-1">
-                    <Compass className="w-4 h-4 text-amber-400" /> 캐릭터 조작 안내
-                  </div>
-                  <p className="text-[11px] text-stone-400">
-                    • 모바일: 좌측 방향 패드 터치
-                  </p>
-                  <p className="text-[11px] text-stone-400">
-                    • PC: 키보드 <kbd className="px-1.5 py-0.5 bg-stone-800 rounded">WASD</kbd> 또는 <kbd className="px-1.5 py-0.5 bg-stone-800 rounded">방향키</kbd>
-                  </p>
-                  <p className="text-[11px] text-emerald-400">
-                    • 피아노/테이블 뒤로 가면 자연스러운 가림 효과 적용!
-                  </p>
                 </div>
               </div>
 
@@ -2891,7 +2960,7 @@ export default function App() {
                     <button
                       key={emo}
                       onClick={() => triggerEmote(emo)}
-                      className="flex-1 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-base border border-stone-700"
+                      className="flex-1 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-base border border-stone-700 active:scale-95 transition"
                     >
                       {emo}
                     </button>
@@ -2899,38 +2968,41 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 3) 내 아바타 & 닉네임 즉시 변경 */}
-              <form onSubmit={handleEnterMusicRoom} className="flex flex-col justify-between gap-2">
-                <span className="text-xs font-bold text-stone-400">
-                  내 단원 닉네임 & 아바타 변경 (16종)
-                </span>
+              {/* 3) 내 닉네임(이름) 변경만 깔끔하게 제공 */}
+              <form onSubmit={handleUpdateMyName} className="flex flex-col justify-between gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-stone-400">내 닉네임(이름) 변경</span>
+                  {myPhoneLast4 && (
+                    <span className="text-[11px] text-amber-300 font-medium">
+                      📱 뒷번호 {myPhoneLast4}
+                    </span>
+                  )}
+                </div>
                 <div className="flex gap-1.5">
                   <input
                     type="text"
                     value={myNickname}
                     onChange={(e) => setMyNickname(e.target.value)}
-                    placeholder="닉네임 입력"
-                    maxLength={8}
-                    className="w-28 px-2.5 py-1.5 rounded-xl bg-stone-950 border border-stone-700 text-xs text-white"
+                    placeholder="변경할 이름 입력"
+                    maxLength={10}
+                    className="flex-1 px-3 py-2 rounded-xl bg-stone-950 border border-stone-700 text-xs text-white focus:outline-none focus:border-amber-400"
                   />
-                  <select
-                    value={myAvatarId}
-                    onChange={(e) => setMyAvatarId(e.target.value)}
-                    className="flex-1 px-2 py-1.5 rounded-xl bg-stone-950 border border-stone-700 text-xs text-amber-200"
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow active:scale-95 transition"
                   >
-                    {AVATAR_PRESETS.map((av) => (
-                      <option key={av.id} value={av.id}>
-                        {av.name}
-                      </option>
-                    ))}
-                  </select>
+                    이름 변경
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  className="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow"
-                >
-                  적용 및 캐릭터 동기화
-                </button>
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="text-[11px] text-stone-400 hover:text-rose-400 underline"
+                  >
+                    다른 사람으로 로그인 →
+                  </button>
+                </div>
               </form>
             </div>
           )}
@@ -3292,6 +3364,95 @@ export default function App() {
           </aside>
         )}
       </main>
+
+      {/* ==========================================
+          MODAL 0: 본인 이름-휴대폰 뒷번호 파티 로그인 모달
+      ========================================== */}
+      {!hasJoined && viewMode !== 'screen' && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-stone-900 border-2 border-amber-500/50 rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-5 shadow-2xl relative">
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center shadow-lg">
+                <Music className="w-8 h-8 text-stone-950" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-amber-100 tracking-tight">
+                Hanwoori Choir 20기
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-300 font-medium">
+                ✨ 송년회 파티 게임 입장 ✨
+              </p>
+              <p className="text-[11px] text-stone-400">
+                본인 이름과 휴대폰 뒷번호 4자리를 입력하고 입장해주세요.
+              </p>
+            </div>
+
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-amber-300">
+                  1. 본인 이름 (실명 또는 닉네임)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={userNameInput}
+                  onChange={(e) => setUserNameInput(e.target.value)}
+                  placeholder="예: 예진, 승환, 원배..."
+                  maxLength={10}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-700 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-amber-300">
+                  2. 휴대폰 뒷번호 (4자리)
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={phoneLast4Input}
+                  onChange={(e) => setPhoneLast4Input(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="예: 1234"
+                  maxLength={4}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-700 text-sm text-white tracking-widest placeholder-stone-500 focus:outline-none focus:border-amber-400"
+                />
+                <p className="text-[10px] text-stone-500">
+                  * 재접속 시 이전 점수와 기록을 안전하게 복원하는 데 사용됩니다.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-amber-300">
+                  3. 내 캐릭터 아바타 선택
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-1 bg-stone-950 rounded-xl border border-stone-800">
+                  {AVATAR_PRESETS.map((av) => (
+                    <button
+                      key={av.id}
+                      type="button"
+                      onClick={() => setLoginAvatarId(av.id)}
+                      className={`p-2 rounded-lg text-center transition border text-xs font-semibold ${
+                        loginAvatarId === av.id
+                          ? 'bg-amber-500 text-stone-950 border-white shadow-md scale-95 font-bold'
+                          : 'bg-stone-900 hover:bg-stone-800 text-stone-300 border-stone-800'
+                      }`}
+                    >
+                      <div className="text-base mb-0.5">👤</div>
+                      <div className="truncate text-[11px]">{av.name.replace(/^[0-9★🎼\.\s]+/, '')}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 text-stone-950 font-black text-sm sm:text-base shadow-xl hover:brightness-110 active:scale-95 transition"
+              >
+                🎹 파티 입장하기
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ==========================================
           MODAL 1: PHASE 1~5 구현 검증 및 Windows 서버 가이드
