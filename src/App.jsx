@@ -60,26 +60,46 @@ try {
 const MAP_WIDTH = 1200;
 const MAP_HEIGHT = 800;
 
-// 한우리 합창단 20기 실제 단원 16명 + 지휘자 + 김다솔 특별 캐릭터 프리셋 (독립 SD 아바타)
+// 한우리 합창단 20기 공식 단원 명단 (이름 및 휴대폰 뒷번호 4자리)
+const OFFICIAL_MEMBERS = [
+  { no: 1, name: '최예진', shortName: '예진', phone: '9908', avatarId: 'yejin', isAdmin: false },
+  { no: 2, name: '송주아', shortName: '주아', phone: '3949', avatarId: 'jua', isAdmin: false },
+  { no: 3, name: '심병수', shortName: '병수', phone: '3051', avatarId: 'byungsoo', isAdmin: false },
+  { no: 4, name: '이원배', shortName: '원배', phone: '8439', avatarId: 'wonbae', isAdmin: false },
+  { no: 5, name: '한승환', shortName: '승환', phone: '8070', avatarId: 'seunghwan', isAdmin: false },
+  { no: 6, name: '고태율', shortName: '태율', phone: '4004', avatarId: 'taeyul', isAdmin: false },
+  { no: 7, name: '사제환', shortName: '제환', phone: '8836', avatarId: 'jehwan', isAdmin: false },
+  { no: 8, name: '이현주', shortName: '현주', phone: '0540', avatarId: 'hyunjoo', isAdmin: false },
+  { no: 9, name: '이경환', shortName: '경환', phone: '2591', avatarId: 'kyunghwan', isAdmin: false },
+  { no: 10, name: '최지은', shortName: '지은', phone: '8697', avatarId: 'jieun', isAdmin: false },
+  { no: 11, name: '김인애', shortName: '인애', phone: '3992', avatarId: 'inae', isAdmin: false },
+  { no: 12, name: '이유정', shortName: '유정', phone: '2839', avatarId: 'yujeong', isAdmin: false },
+  { no: 13, name: '황유빈', shortName: '유빈', phone: '2901', avatarId: 'yubin', isAdmin: false },
+  { no: 14, name: '황동원', shortName: '동원', phone: '', avatarId: 'dongwon', isAdmin: false }, // 뒷번호 미등록 유연 허용
+  { no: 15, name: '김다솔', shortName: '다솔', phone: '1208', avatarId: 'dasol', isAdmin: false },
+  { no: 16, name: '김석준', shortName: '석준', phone: '2918', avatarId: 'conductor', isAdmin: true }, // 관리자
+  { no: 17, name: '이민우', shortName: '민우', phone: '4637', avatarId: 'minwoo', isAdmin: false },
+];
+
+// 한우리 합창단 20기 공식 단원 17명 SD 캐릭터 프리셋
 const AVATAR_PRESETS = [
-  { id: 'yejin', name: '1. 예진', defaultNick: '예진', hair: 'wavy_long', hairColor: '#b88658', outfit: '#e8d8c8', bottom: '#5c4636', acc: 'ribbon', skin: '#ffe8dc' },
-  { id: 'jua', name: '2. 주아', defaultNick: '주아', hair: 'twintail', hairColor: '#e87a90', outfit: '#f4a7b9', bottom: '#3b4254', acc: 'hairpin', skin: '#ffeaf0' },
-  { id: 'byungsoo', name: '3. 병수', defaultNick: '병수', hair: 'neat_boy', hairColor: '#242024', outfit: '#2b3548', bottom: '#1e2430', acc: 'tie', skin: '#ffe2d1' },
-  { id: 'wonbae', name: '4. 원배 (LG)', defaultNick: '원배 (LG)', hair: 'parted_boy', hairColor: '#232b38', outfit: '#eef2f7', bottom: '#2e3846', acc: 'glasses', skin: '#ffe2d1' },
-  { id: 'seunghwan', name: '5. 승환', defaultNick: '승환', hair: 'medium_wave', hairColor: '#5c3c24', outfit: '#eee5d8', bottom: '#4a3b2c', acc: 'none', skin: '#ffe4d6' },
-  { id: 'taeyul', name: '6. 태율', defaultNick: '태율', hair: 'neat_boy', hairColor: '#1f242d', outfit: '#2c3038', bottom: '#1f2229', acc: 'badge', skin: '#ffe4d6' },
-  { id: 'jehwan', name: '7. 제환', defaultNick: '제환', hair: 'round_boy', hairColor: '#634735', outfit: '#f5ebe6', bottom: '#4d392d', acc: 'vest', skin: '#ffe4d6' },
-  { id: 'hyunjoo', name: '8. 현주(ㄴ)', defaultNick: '현주(ㄴ)', hair: 'bob_cute', hairColor: '#b5926b', outfit: '#697a8c', bottom: '#3a4450', acc: 'collar', skin: '#ffe6d8' },
-  { id: 'kyunghwan', name: '9. 경환', defaultNick: '경환', hair: 'short_parted', hairColor: '#594233', outfit: '#f7f3ef', bottom: '#42352b', acc: 'note', skin: '#ffe4d6' },
-  { id: 'jieun', name: '10. 지은', defaultNick: '지은', hair: 'long_straight', hairColor: '#3b2e35', outfit: '#f0e6ec', bottom: '#483b42', acc: 'headband', skin: '#ffe8e8' },
-  { id: 'inae', name: '11. 인애', defaultNick: '인애', hair: 'half_tie', hairColor: '#6b442a', outfit: '#d96b6b', bottom: '#f5e6e8', acc: 'bow', skin: '#ffe6d8' },
-  { id: 'yujeong', name: '12. 유정', defaultNick: '유정', hair: 'braid_warm', hairColor: '#69462d', outfit: '#d9c2a6', bottom: '#5c4330', acc: 'beret', skin: '#ffe6d8' },
-  { id: 'yubin', name: '13. 유빈♥', defaultNick: '유빈♥', hair: 'wavy_long', hairColor: '#332824', outfit: '#f5efe8', bottom: '#382c26', acc: 'flower', skin: '#ffe8dc' },
-  { id: 'gyumin', name: '14. 규민', defaultNick: '규민', hair: 'neat_boy', hairColor: '#8c583a', outfit: '#3b2d26', bottom: '#241c18', acc: 'bowtie', skin: '#ffe2d1' },
-  { id: 'dongwon', name: '15. 동원', defaultNick: '동원', hair: 'short_parted', hairColor: '#2c262b', outfit: '#3b4254', bottom: '#1e2430', acc: 'tie', skin: '#ffe4d6' },
-  { id: 'daseok', name: '16. 다석', defaultNick: '다석', hair: 'round_boy', hairColor: '#4a3525', outfit: '#e6d8df', bottom: '#3a3238', acc: 'badge', skin: '#ffe8dc' },
-  { id: 'dasol', name: '★ 김다솔 (특별단원)', defaultNick: '김다솔', hair: 'wavy_long', hairColor: '#7c4d28', outfit: '#d8f3dc', bottom: '#2d6a4f', acc: 'flower', skin: '#ffe8dc' },
-  { id: 'conductor', name: '🎼 지휘자님', defaultNick: '지휘자', hair: 'short_parted', hairColor: '#3a2618', outfit: '#f5efe6', bottom: '#2b2b2b', acc: 'baton', skin: '#ffe4d6' },
+  { id: 'yejin', name: '1. 최예진', defaultNick: '최예진', hair: 'wavy_long', hairColor: '#b88658', outfit: '#e8d8c8', bottom: '#5c4636', acc: 'ribbon', skin: '#ffe8dc' },
+  { id: 'jua', name: '2. 송주아', defaultNick: '송주아', hair: 'twintail', hairColor: '#e87a90', outfit: '#f4a7b9', bottom: '#3b4254', acc: 'hairpin', skin: '#ffeaf0' },
+  { id: 'byungsoo', name: '3. 심병수', defaultNick: '심병수', hair: 'neat_boy', hairColor: '#242024', outfit: '#2b3548', bottom: '#1e2430', acc: 'tie', skin: '#ffe2d1' },
+  { id: 'wonbae', name: '4. 이원배', defaultNick: '이원배', hair: 'parted_boy', hairColor: '#232b38', outfit: '#eef2f7', bottom: '#2e3846', acc: 'glasses', skin: '#ffe2d1' },
+  { id: 'seunghwan', name: '5. 한승환', defaultNick: '한승환', hair: 'medium_wave', hairColor: '#5c3c24', outfit: '#eee5d8', bottom: '#4a3b2c', acc: 'none', skin: '#ffe4d6' },
+  { id: 'taeyul', name: '6. 고태율', defaultNick: '고태율', hair: 'neat_boy', hairColor: '#1f242d', outfit: '#2c3038', bottom: '#1f2229', acc: 'badge', skin: '#ffe4d6' },
+  { id: 'jehwan', name: '7. 사제환', defaultNick: '사제환', hair: 'round_boy', hairColor: '#634735', outfit: '#f5ebe6', bottom: '#4d392d', acc: 'vest', skin: '#ffe4d6' },
+  { id: 'hyunjoo', name: '8. 이현주', defaultNick: '이현주', hair: 'bob_cute', hairColor: '#b5926b', outfit: '#697a8c', bottom: '#3a4450', acc: 'collar', skin: '#ffe6d8' },
+  { id: 'kyunghwan', name: '9. 이경환', defaultNick: '이경환', hair: 'short_parted', hairColor: '#594233', outfit: '#f7f3ef', bottom: '#42352b', acc: 'note', skin: '#ffe4d6' },
+  { id: 'jieun', name: '10. 최지은', defaultNick: '최지은', hair: 'long_straight', hairColor: '#3b2e35', outfit: '#f0e6ec', bottom: '#483b42', acc: 'headband', skin: '#ffe8e8' },
+  { id: 'inae', name: '11. 김인애', defaultNick: '김인애', hair: 'half_tie', hairColor: '#6b442a', outfit: '#d96b6b', bottom: '#f5e6e8', acc: 'bow', skin: '#ffe6d8' },
+  { id: 'yujeong', name: '12. 이유정', defaultNick: '이유정', hair: 'braid_warm', hairColor: '#69462d', outfit: '#d9c2a6', bottom: '#5c4330', acc: 'beret', skin: '#ffe6d8' },
+  { id: 'yubin', name: '13. 황유빈', defaultNick: '황유빈', hair: 'wavy_long', hairColor: '#332824', outfit: '#f5efe8', bottom: '#382c26', acc: 'flower', skin: '#ffe8dc' },
+  { id: 'dongwon', name: '14. 황동원', defaultNick: '황동원', hair: 'short_parted', hairColor: '#2c262b', outfit: '#3b4254', bottom: '#1e2430', acc: 'tie', skin: '#ffe4d6' },
+  { id: 'dasol', name: '15. 김다솔', defaultNick: '김다솔', hair: 'wavy_long', hairColor: '#7c4d28', outfit: '#d8f3dc', bottom: '#2d6a4f', acc: 'flower', skin: '#ffe8dc' },
+  { id: 'conductor', name: '16. 김석준 (관리자)', defaultNick: '김석준', hair: 'short_parted', hairColor: '#3a2618', outfit: '#f5efe6', bottom: '#2b2b2b', acc: 'baton', skin: '#ffe4d6' },
+  { id: 'minwoo', name: '17. 이민우', defaultNick: '이민우', hair: 'neat_boy', hairColor: '#2b2430', outfit: '#3e4a61', bottom: '#1f2430', acc: 'bowtie', skin: '#ffe2d1' },
 ];
 
 // 음악실 로비 내 가구 충돌 박스 및 Y-Sorting(깊이 정렬) 기준선 정의
@@ -1870,46 +1890,74 @@ export default function App() {
     }
   }, []);
 
-  // 로그인 화면에서 [이름 - 휴대폰 뒷번호] 입력 후 입장
+  // 로그인 화면에서 [이름 - 휴대폰 뒷번호] 입력 후 단원 명단 검증 및 입장
   const handleLoginSubmit = (e) => {
     if (e) e.preventDefault();
-    const cleanName = userNameInput.trim();
+    const cleanName = userNameInput.trim().replace(/\s+/g, '');
     const cleanPhone = phoneLast4Input.trim().slice(-4);
 
     if (!cleanName) {
-      alert('본인 이름을 입력해주세요!');
-      return;
-    }
-    if (!cleanPhone || cleanPhone.length < 4) {
-      alert('휴대폰 뒷번호 4자리를 정확히 입력해주세요!');
+      alert('본인 이름을 입력해주세요! (예: 최예진 또는 예진)');
       return;
     }
 
-    const playerId = `u_${cleanPhone}_${cleanName.replace(/[^a-zA-Z0-9가-힣]/g, '')}`;
+    // 1. 단원 명단 대조 (전체 이름 또는 성 제외 이름 일치 확인)
+    const member = OFFICIAL_MEMBERS.find(
+      (m) => m.name === cleanName || m.shortName === cleanName
+    );
+
+    if (!member) {
+      alert(`[${userNameInput}] 님은 한우리 20기 단원 명단에서 찾을 수 없습니다.\n본인 성함을 다시 한번 확인해주세요! (예: 최예진, 송주아 등)`);
+      return;
+    }
+
+    // 2. 휴대폰 뒷번호 대조 (황동원 단원은 뒷번호 미등록이므로 번호 없이도 통과 허용)
+    if (member.phone) {
+      if (!cleanPhone || cleanPhone.length < 4) {
+        alert('휴대폰 뒷번호 4자리를 입력해주세요!');
+        return;
+      }
+      if (cleanPhone !== member.phone) {
+        alert(`[${member.name}] 단원님의 등록된 휴대폰 뒷번호와 일치하지 않습니다.\n뒷번호 4자리를 다시 확인해주세요!`);
+        return;
+      }
+    }
+
+    // 관리자(김석준 - 2918) 로그인 시 관리자 권한 활성화
+    if (member.isAdmin) {
+      setAdminUnlocked(true);
+    }
+
+    const assignedAvatarId = loginAvatarId !== 'yejin' ? loginAvatarId : member.avatarId;
+    const finalNick = member.name;
+    const finalPhone = cleanPhone || member.phone || '0000';
+    const playerId = `u_${finalPhone}_${member.name}`;
+
     setMyId(playerId);
-    setMyNickname(cleanName);
-    setMyPhoneLast4(cleanPhone);
-    setMyAvatarId(loginAvatarId);
+    setMyNickname(finalNick);
+    setMyPhoneLast4(finalPhone);
+    setMyAvatarId(assignedAvatarId);
     setHasJoined(true);
     soundFX.playFanfare();
 
     try {
       localStorage.setItem('hanwoori_user_profile', JSON.stringify({
         id: playerId,
-        name: cleanName,
-        phone: cleanPhone,
-        avatarId: loginAvatarId
+        name: finalNick,
+        phone: finalPhone,
+        avatarId: assignedAvatarId,
+        isAdmin: member.isAdmin || false
       }));
     } catch (err) {}
 
     setPlayers((prev) => {
       const existing = prev.find((p) => p.id === playerId);
       const myData = existing
-        ? { ...existing, nickname: cleanName, avatarId: loginAvatarId }
+        ? { ...existing, nickname: finalNick, avatarId: assignedAvatarId }
         : {
             id: playerId,
-            nickname: cleanName,
-            avatarId: loginAvatarId,
+            nickname: finalNick,
+            avatarId: assignedAvatarId,
             isBot: false,
             room: gameState.activeRoom,
             x: 580 + (Math.random() * 60 - 30),
@@ -1938,6 +1986,10 @@ export default function App() {
         : [...prev, myData];
       return nextList;
     });
+
+    if (member.isAdmin) {
+      alert(`환영합니다, 관리자 ${member.name}님!\n사회자 콘솔(/admin)과 스크린 모드를 이용하실 수 있습니다.`);
+    }
   };
 
   // 로비에서 내 이름만 즉시 수정
@@ -3333,35 +3385,80 @@ export default function App() {
 
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-amber-300">
-                  1. 본인 이름 (실명 또는 닉네임)
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-amber-300">
+                    1. 본인 이름 (단원 선택 또는 입력)
+                  </label>
+                  <span className="text-[10px] text-stone-400">총 17명 등록됨</span>
+                </div>
+
+                {/* 단원 빠른 선택 칩 목록 */}
+                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1.5 bg-stone-950 rounded-xl border border-stone-800">
+                  {OFFICIAL_MEMBERS.map((m) => {
+                    const isSelected = userNameInput === m.name || userNameInput === m.shortName;
+                    return (
+                      <button
+                        key={m.no}
+                        type="button"
+                        onClick={() => {
+                          setUserNameInput(m.name);
+                          setLoginAvatarId(m.avatarId);
+                          if (m.phone) {
+                            setPhoneLast4Input('');
+                          } else {
+                            setPhoneLast4Input('0000');
+                          }
+                        }}
+                        className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition border ${
+                          isSelected
+                            ? 'bg-amber-500 text-stone-950 border-amber-300 font-bold scale-95 shadow'
+                            : 'bg-stone-900 hover:bg-stone-800 text-stone-300 border-stone-800'
+                        }`}
+                      >
+                        {m.name}
+                        {m.isAdmin && <span className="text-[9px] text-rose-400 ml-0.5">★</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <input
                   type="text"
                   required
                   value={userNameInput}
                   onChange={(e) => setUserNameInput(e.target.value)}
-                  placeholder="예: 예진, 승환, 원배..."
+                  placeholder="위에서 이름을 누르거나 직접 입력하세요 (예: 최예진)"
                   maxLength={10}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-700 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-amber-400"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-amber-300">
-                  2. 휴대폰 뒷번호 (4자리)
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-amber-300">
+                    2. 휴대폰 뒷번호 (4자리)
+                  </label>
+                  {userNameInput.includes('황동원') || userNameInput === '동원' ? (
+                    <span className="text-[11px] text-emerald-400 font-semibold">
+                      * 번호 없이 바로 입장 가능
+                    </span>
+                  ) : null}
+                </div>
                 <input
                   type="tel"
-                  required
+                  required={!(userNameInput.includes('황동원') || userNameInput === '동원')}
                   value={phoneLast4Input}
                   onChange={(e) => setPhoneLast4Input(e.target.value.replace(/[^0-9]/g, ''))}
-                  placeholder="예: 1234"
+                  placeholder={
+                    userNameInput.includes('황동원') || userNameInput === '동원'
+                      ? '황동원 단원은 비워두셔도 됩니다'
+                      : '본인 휴대폰 뒷번호 4자리 (예: 9908)'
+                  }
                   maxLength={4}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-700 text-sm text-white tracking-widest placeholder-stone-500 focus:outline-none focus:border-amber-400"
                 />
                 <p className="text-[10px] text-stone-500">
-                  * 재접속 시 이전 점수와 기록을 안전하게 복원하는 데 사용됩니다.
+                  * 등록된 20기 단원 명단과 대조하여 본인 확인 및 점수가 저장됩니다.
                 </p>
               </div>
 
