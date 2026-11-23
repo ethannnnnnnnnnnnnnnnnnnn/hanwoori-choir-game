@@ -62,49 +62,67 @@ const MAP_HEIGHT = 800;
 
 // 한우리 합창단 20기 공식 단원 명단 (이름 및 휴대폰 뒷번호 4자리)
 const OFFICIAL_MEMBERS = [
-  { no: 1, name: '최예진', shortName: '예진', phone: '9908', avatarId: 'yejin', isAdmin: false },
-  { no: 2, name: '송주아', shortName: '주아', phone: '3949', avatarId: 'jua', isAdmin: false },
-  { no: 3, name: '심병수', shortName: '병수', phone: '3051', avatarId: 'byungsoo', isAdmin: false },
-  { no: 4, name: '이원배', shortName: '원배', phone: '8439', avatarId: 'wonbae', isAdmin: false },
-  { no: 5, name: '한승환', shortName: '승환', phone: '8070', avatarId: 'seunghwan', isAdmin: false },
-  { no: 6, name: '고태율', shortName: '태율', phone: '4004', avatarId: 'taeyul', isAdmin: false },
-  { no: 7, name: '사제환', shortName: '제환', phone: '8836', avatarId: 'jehwan', isAdmin: false },
-  { no: 8, name: '이현주', shortName: '현주', phone: '0540', avatarId: 'hyunjoo', isAdmin: false },
-  { no: 9, name: '이경환', shortName: '경환', phone: '2591', avatarId: 'kyunghwan', isAdmin: false },
-  { no: 10, name: '최지은', shortName: '지은', phone: '8697', avatarId: 'jieun', isAdmin: false },
-  { no: 11, name: '김인애', shortName: '인애', phone: '3992', avatarId: 'inae', isAdmin: false },
-  { no: 12, name: '이유정', shortName: '유정', phone: '2839', avatarId: 'yujeong', isAdmin: false },
-  { no: 13, name: '황유빈', shortName: '유빈', phone: '2901', avatarId: 'yubin', isAdmin: false },
-  { no: 14, name: '황동원', shortName: '동원', phone: '', avatarId: 'dongwon', isAdmin: false }, // 뒷번호 미등록 유연 허용
-  { no: 15, name: '김다솔', shortName: '다솔', phone: '1208', avatarId: 'dasol', isAdmin: false },
+  { no: 1, name: '최예진', shortName: '예진', phone: '9908', avatarId: 'haeun', isAdmin: false },
+  { no: 2, name: '송주아', shortName: '주아', phone: '3949', avatarId: 'yujin', isAdmin: false },
+  { no: 3, name: '심병수', shortName: '병수', phone: '3051', avatarId: 'dowon', isAdmin: false },
+  { no: 4, name: '이원배', shortName: '원배', phone: '8439', avatarId: 'minseok', isAdmin: false },
+  { no: 5, name: '한승환', shortName: '승환', phone: '8070', avatarId: 'hyuno', isAdmin: false },
+  { no: 6, name: '고태율', shortName: '태율', phone: '4004', avatarId: 'dion', isAdmin: false },
+  { no: 7, name: '사제환', shortName: '제환', phone: '8836', avatarId: 'conductor', isAdmin: false },
+  { no: 8, name: '이현주', shortName: '현주', phone: '0540', avatarId: 'chaewon', isAdmin: false },
+  { no: 9, name: '이경환', shortName: '경환', phone: '2591', avatarId: 'dawon', isAdmin: false },
+  { no: 10, name: '최지은', shortName: '지은', phone: '8697', avatarId: 'seohyun', isAdmin: false },
+  { no: 11, name: '김인애', shortName: '인애', phone: '3992', avatarId: 'soohyun', isAdmin: false },
+  { no: 12, name: '이유정', shortName: '유정', phone: '2839', avatarId: 'soyoung', isAdmin: false },
+  { no: 13, name: '황유빈', shortName: '유빈', phone: '2901', avatarId: 'haeun', isAdmin: false },
+  { no: 14, name: '황동원', shortName: '동원', phone: '', avatarId: 'dowon', isAdmin: false }, // 뒷번호 미등록 유연 허용
+  { no: 15, name: '김다솔', shortName: '다솔', phone: '1208', avatarId: 'chaewon', isAdmin: false },
   { no: 16, name: '김석준', shortName: '석준', phone: '2918', avatarId: 'conductor', isAdmin: true }, // 관리자
-  { no: 17, name: '이민우', shortName: '민우', phone: '4637', avatarId: 'minwoo', isAdmin: false },
-  { no: 18, name: '이대건', shortName: '대건', phone: '0222', avatarId: 'daegeon', isAdmin: false },
-  { no: 19, name: '이상언', shortName: '상언', phone: '4015', avatarId: 'sangeon', isAdmin: false },
+  { no: 17, name: '이민우', shortName: '민우', phone: '4637', avatarId: 'minseok', isAdmin: false },
+  { no: 18, name: '이대건', shortName: '대건', phone: '0222', avatarId: 'hyuno', isAdmin: false },
+  { no: 19, name: '이상언', shortName: '상언', phone: '4015', avatarId: 'dowon', isAdmin: false },
 ];
 
-// 한우리 합창단 20기 귀여운 SD 캐릭터 프리셋 (총 19종 스타일)
+// 한우리 합창단 20기 일러스트 실물 SD 캐릭터 프리셋 (총 13종)
 const AVATAR_PRESETS = [
-  { id: 'yejin', name: '웨이브 로맨틱', defaultNick: '단원', hair: 'wavy_long', hairColor: '#b88658', outfit: '#e8d8c8', bottom: '#5c4636', acc: 'ribbon', skin: '#ffe8dc' },
-  { id: 'jua', name: '발랄 핑키트윈', defaultNick: '단원', hair: 'twintail', hairColor: '#e87a90', outfit: '#f4a7b9', bottom: '#3b4254', acc: 'hairpin', skin: '#ffeaf0' },
-  { id: 'byungsoo', name: '클래식 수트타이', defaultNick: '단원', hair: 'neat_boy', hairColor: '#242024', outfit: '#2b3548', bottom: '#1e2430', acc: 'tie', skin: '#ffe2d1' },
-  { id: 'wonbae', name: '스마트 글래스', defaultNick: '단원', hair: 'parted_boy', hairColor: '#232b38', outfit: '#eef2f7', bottom: '#2e3846', acc: 'glasses', skin: '#ffe2d1' },
-  { id: 'seunghwan', name: '내추럴 웨이브', defaultNick: '단원', hair: 'medium_wave', hairColor: '#5c3c24', outfit: '#eee5d8', bottom: '#4a3b2c', acc: 'none', skin: '#ffe4d6' },
-  { id: 'taeyul', name: '시크 다크네이비', defaultNick: '단원', hair: 'neat_boy', hairColor: '#1f242d', outfit: '#2c3038', bottom: '#1f2229', acc: 'badge', skin: '#ffe4d6' },
-  { id: 'jehwan', name: '클래식 베스트', defaultNick: '단원', hair: 'round_boy', hairColor: '#634735', outfit: '#f5ebe6', bottom: '#4d392d', acc: 'vest', skin: '#ffe4d6' },
-  { id: 'hyunjoo', name: '단발 큐트칼라', defaultNick: '단원', hair: 'bob_cute', hairColor: '#b5926b', outfit: '#697a8c', bottom: '#3a4450', acc: 'collar', skin: '#ffe6d8' },
-  { id: 'kyunghwan', name: '소프트 파티드', defaultNick: '단원', hair: 'short_parted', hairColor: '#594233', outfit: '#f7f3ef', bottom: '#42352b', acc: 'note', skin: '#ffe4d6' },
-  { id: 'jieun', name: '청순 롱스트레이트', defaultNick: '단원', hair: 'long_straight', hairColor: '#3b2e35', outfit: '#f0e6ec', bottom: '#483b42', acc: 'headband', skin: '#ffe8e8' },
-  { id: 'inae', name: '레드보우 하프타이', defaultNick: '단원', hair: 'half_tie', hairColor: '#6b442a', outfit: '#d96b6b', bottom: '#f5e6e8', acc: 'bow', skin: '#ffe6d8' },
-  { id: 'yujeong', name: '브라운 베레모', defaultNick: '단원', hair: 'braid_warm', hairColor: '#69462d', outfit: '#d9c2a6', bottom: '#5c4330', acc: 'beret', skin: '#ffe6d8' },
-  { id: 'yubin', name: '플라워 웨이브', defaultNick: '단원', hair: 'wavy_long', hairColor: '#332824', outfit: '#f5efe8', bottom: '#382c26', acc: 'flower', skin: '#ffe8dc' },
-  { id: 'dongwon', name: '모던 숏파트', defaultNick: '단원', hair: 'short_parted', hairColor: '#2c262b', outfit: '#3b4254', bottom: '#1e2430', acc: 'tie', skin: '#ffe4d6' },
-  { id: 'dasol', name: '에메랄드 드레스', defaultNick: '단원', hair: 'wavy_long', hairColor: '#7c4d28', outfit: '#d8f3dc', bottom: '#2d6a4f', acc: 'flower', skin: '#ffe8dc' },
-  { id: 'conductor', name: '마에스트로 연주복', defaultNick: '단원', hair: 'short_parted', hairColor: '#3a2618', outfit: '#f5efe6', bottom: '#2b2b2b', acc: 'baton', skin: '#ffe4d6' },
-  { id: 'minwoo', name: '보타이 네이비', defaultNick: '단원', hair: 'neat_boy', hairColor: '#2b2430', outfit: '#3e4a61', bottom: '#1f2430', acc: 'bowtie', skin: '#ffe2d1' },
-  { id: 'daegeon', name: '딥그린 숏파트', defaultNick: '단원', hair: 'short_parted', hairColor: '#362b28', outfit: '#3b5249', bottom: '#1f2421', acc: 'badge', skin: '#ffe4d6' },
-  { id: 'sangeon', name: '모던 라이트그레이', defaultNick: '단원', hair: 'parted_boy', hairColor: '#1e2430', outfit: '#e9ecef', bottom: '#343a40', acc: 'collar', skin: '#ffe2d1' },
+  { id: 'conductor', name: '마에스트로 연주복', sprite: 'conductor', defaultNick: '단원', hair: 'short_parted', hairColor: '#3a2618', outfit: '#f5efe6', bottom: '#2b2b2b', acc: 'baton', skin: '#ffe4d6' },
+  { id: 'hyuno', name: '따뜻한 브라운 코트', sprite: 'hyuno', defaultNick: '단원', hair: 'medium_wave', hairColor: '#5c3c24', outfit: '#eee5d8', bottom: '#4a3b2c', acc: 'none', skin: '#ffe4d6' },
+  { id: 'dowon', name: '클래식 네이비 수트', sprite: 'dowon', defaultNick: '단원', hair: 'neat_boy', hairColor: '#242024', outfit: '#2b3548', bottom: '#1e2430', acc: 'tie', skin: '#ffe2d1' },
+  { id: 'minseok', name: '단정한 화이트 셔츠', sprite: 'minseok', defaultNick: '단원', hair: 'parted_boy', hairColor: '#232b38', outfit: '#eef2f7', bottom: '#2e3846', acc: 'glasses', skin: '#ffe2d1' },
+  { id: 'dawon', name: '내추럴 보브 숏컷', sprite: 'dawon', defaultNick: '단원', hair: 'short_parted', hairColor: '#594233', outfit: '#f7f3ef', bottom: '#42352b', acc: 'note', skin: '#ffe4d6' },
+  { id: 'dion', name: '시크 다크 블레이저', sprite: 'dion', defaultNick: '단원', hair: 'neat_boy', hairColor: '#1f242d', outfit: '#2c3038', bottom: '#1f2229', acc: 'badge', skin: '#ffe4d6' },
+  { id: 'chaewon', name: '단정한 카라 원피스', sprite: 'chaewon', defaultNick: '단원', hair: 'bob_cute', hairColor: '#b5926b', outfit: '#697a8c', bottom: '#3a4450', acc: 'collar', skin: '#ffe6d8' },
+  { id: 'seohyun', name: '우아한 골드 웨이브', sprite: 'seohyun', defaultNick: '단원', hair: 'wavy_long', hairColor: '#b88658', outfit: '#e8d8c8', bottom: '#5c4636', acc: 'ribbon', skin: '#ffe8dc' },
+  { id: 'soohyun', name: '러블리 리본 헤어', sprite: 'soohyun', defaultNick: '단원', hair: 'half_tie', hairColor: '#6b442a', outfit: '#d96b6b', bottom: '#f5e6e8', acc: 'bow', skin: '#ffe6d8' },
+  { id: 'yujin', name: '발랄한 핑키 트윈', sprite: 'yujin', defaultNick: '단원', hair: 'twintail', hairColor: '#e87a90', outfit: '#f4a7b9', bottom: '#3b4254', acc: 'hairpin', skin: '#ffeaf0' },
+  { id: 'soyoung', name: '따뜻한 베레모 코트', sprite: 'soyoung', defaultNick: '단원', hair: 'braid_warm', hairColor: '#69462d', outfit: '#d9c2a6', bottom: '#5c4330', acc: 'beret', skin: '#ffe6d8' },
+  { id: 'haeun', name: '로맨틱 롱헤어', sprite: 'haeun', defaultNick: '단원', hair: 'long_straight', hairColor: '#3b2e35', outfit: '#f0e6ec', bottom: '#483b42', acc: 'headband', skin: '#ffe8e8' },
+  { id: 'puppy', name: '귀여운 마스코트 뽀삐', sprite: 'puppy', defaultNick: '단원', hair: 'round_boy', hairColor: '#ffffff', outfit: '#ffffff', bottom: '#ffffff', acc: 'none', skin: '#ffffff' },
 ];
+
+// 레거시 아바타 ID 매핑 테이블 (기존 사용자 호환)
+const AVATAR_ID_MAP = {
+  yejin: 'haeun',
+  jua: 'yujin',
+  byungsoo: 'dowon',
+  wonbae: 'minseok',
+  seunghwan: 'hyuno',
+  taeyul: 'dion',
+  jehwan: 'conductor',
+  hyunjoo: 'chaewon',
+  kyunghwan: 'dawon',
+  jieun: 'seohyun',
+  inae: 'soohyun',
+  yujeong: 'soyoung',
+  yubin: 'haeun',
+  dongwon: 'dowon',
+  dasol: 'chaewon',
+  conductor: 'conductor',
+  minwoo: 'minseok',
+  daegeon: 'hyuno',
+  sangeon: 'dowon',
+  puppy: 'puppy'
+};
 
 // 음악실 로비 내 가구 충돌 박스 및 Y-Sorting(깊이 정렬) 기준선 정의
 const LOBBY_OBSTACLES = [
@@ -419,45 +437,22 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// 원본 고화질 일러스트 대기실 배경 이미지 로드
-let lobbyBgImage = null;
+// 3.0 일러스트 아바타 스프라이트 이미지 프리로더 (13종 실물 SD 캐릭터)
+const AVATAR_SPRITES = {};
+const AVATAR_SPRITE_NAMES = [
+  'conductor', 'dowon', 'hyuno', 'yujin', 'chaewon', 'seohyun',
+  'dion', 'minseok', 'soyoung', 'soohyun', 'dawon', 'haeun', 'puppy'
+];
 if (typeof window !== 'undefined') {
-  lobbyBgImage = new Image();
-  lobbyBgImage.src = `${import.meta.env.BASE_URL}lobby_bg.jpg?v=20261124_clean`;
+  AVATAR_SPRITE_NAMES.forEach((name) => {
+    const img = new Image();
+    img.src = `${import.meta.env.BASE_URL}avatars/${name}.png`;
+    AVATAR_SPRITES[name] = img;
+  });
 }
 
-// 3.1 배경 레이어 (원본 고화질 일러스트 원본 유지 & 알록달록 크리스마스 LED 전구 연출)
-function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
-  const isImageLoaded = lobbyBgImage && lobbyBgImage.complete && lobbyBgImage.naturalWidth > 0;
-
-  if (isImageLoaded) {
-    // 1. 고화질 클린 일러스트 배경 렌더링 (1200 x 800)
-    // 원본 이미지 자체에 '삼성 한우리 합창단 20기', 공지사항('배신자 이민우...'), 지워진 이젤/벽면이 감쪽같이 반영되어 있으므로
-    // 투박한 단색 fillRect 패치를 일절 칠하지 않고 고화질 원본 그대로 표시합니다!
-    ctx.drawImage(lobbyBgImage, 0, 0, MAP_WIDTH, MAP_HEIGHT);
-
-    // 2. 상단 전체 알록달록 반짝이는 LED 크리스마스 전구 스트링 (0 ~ 1200)
-    ctx.save();
-    const bulbColors = ['#ff4d4d', '#2ecc71', '#ffd700', '#ffffff', '#ff7675', '#00cec9'];
-    for (let x = 15; x < MAP_WIDTH - 15; x += 36) {
-      const by = 8 + Math.sin(x * 0.05) * 6;
-      const color = bulbColors[Math.floor((x / 36 + time * 3) % bulbColors.length)];
-      const glow = ctx.createRadialGradient(x, by, 1, x, by, 15);
-      glow.addColorStop(0, color);
-      glow.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(x, by, 15, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(x, by, 4.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-
-    return; // 원본 이미지 렌더링 완료!
-  }
+// 3.1 배경 레이어 (따뜻한 지브리 애니메이션 풍 2D 대기실 일러스트 & 크리스마스 연출)
+function drawMusicRoomBackground(ctx, time, gameState) {
 
   // 1) 전체 바닥 (따뜻한 파스텔 원목 마루 - 폴백)
   const floorGrad = ctx.createLinearGradient(0, 220, 0, MAP_HEIGHT);
@@ -851,6 +846,82 @@ function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
   ctx.arc(dogX - 4, dogY - 6 + dogBounce, 2.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+
+  // 13) 대기실 아기자기한 화분 장식들 (공간을 따뜻하고 싱그럽게 연출)
+  const drawPottedPlant = (px, py, scale = 1, flowerColor = null) => {
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.ellipse(0, 14, 18, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#b85d3b';
+    ctx.beginPath();
+    ctx.moveTo(-14, 12);
+    ctx.lineTo(14, 12);
+    ctx.lineTo(18, -12);
+    ctx.lineTo(-18, -12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#cf6f4c';
+    ctx.fillRect(-20, -16, 40, 6);
+    ctx.fillStyle = '#4a2e1b';
+    ctx.beginPath();
+    ctx.ellipse(0, -14, 16, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const leafColors = ['#2d6a4f', '#40916c', '#52b788', '#74c69d'];
+    [
+      [-12, -26, 12, 20, -0.4],
+      [12, -26, 12, 20, 0.4],
+      [0, -32, 14, 22, 0],
+      [-18, -18, 10, 16, -0.7],
+      [18, -18, 10, 16, 0.7]
+    ].forEach(([lx, ly, lw, lh, rot], idx) => {
+      ctx.fillStyle = leafColors[idx % leafColors.length];
+      ctx.beginPath();
+      ctx.ellipse(lx, ly, lw, lh, rot, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    if (flowerColor) {
+      ctx.fillStyle = flowerColor;
+      ctx.beginPath();
+      ctx.arc(0, -32, 6, 0, Math.PI * 2);
+      ctx.arc(-8, -26, 5, 0, Math.PI * 2);
+      ctx.arc(8, -26, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffd166';
+      ctx.beginPath();
+      ctx.arc(0, -32, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  };
+
+  drawPottedPlant(88, 355, 1.1);
+  drawPottedPlant(280, 360, 0.95, '#ffffff'); // 백합 꽃 화분
+  drawPottedPlant(775, 360, 0.95, '#ff85a1'); // 핑크 꽃 화분
+  drawPottedPlant(1125, 365, 1.05);
+
+  // 14) 상단 천장 전체 알록달록 반짝이는 LED 크리스마스 전구 스트링 (0 ~ 1200)
+  ctx.save();
+  const ceilingBulbs = ['#ff4d4d', '#2ecc71', '#ffd700', '#ffffff', '#ff7675', '#00cec9'];
+  for (let x = 15; x < MAP_WIDTH - 15; x += 36) {
+    const by = 8 + Math.sin(x * 0.05) * 6;
+    const color = ceilingBulbs[Math.floor((x / 36 + time * 3) % ceilingBulbs.length)];
+    const glow = ctx.createRadialGradient(x, by, 1, x, by, 15);
+    glow.addColorStop(0, color);
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(x, by, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, by, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 // 포털 아치 그리기 헬퍼
@@ -939,10 +1010,6 @@ function drawPortalArch(ctx, { x, y, w, h, title, subtitle, isPink, isOpen, time
 
 // 3.2 Y-Sorting 대상 가구 오브젝트 렌더러 (캐릭터가 가구 뒤로 가면 자연스럽게 가려짐)
 function getFurnitureDrawables(noticeText) {
-  // 원본 고화질 일러스트가 로드된 경우 이미지에 가구 디테일이 이미 완벽히 들어있으므로 중복 렌더링 방지
-  if (lobbyBgImage && lobbyBgImage.complete && lobbyBgImage.naturalWidth > 0) {
-    return [];
-  }
   return [
     // 1) 중앙 그랜드 피아노 (sortY: 380)
     {
@@ -1511,190 +1578,196 @@ function drawChibiAvatar(ctx, player, isMe, time) {
     }
   }
 
-  // 2) 뒷머리 (롱헤어/트윈테일 등)
-  ctx.fillStyle = preset.hairColor;
-  if (['wavy_long', 'long_straight', 'half_tie'].includes(preset.hair)) {
-    ctx.beginPath();
-    ctx.ellipse(0, bodyY - 26, 20, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
-  } else if (preset.hair === 'twintail') {
-    ctx.beginPath();
-    ctx.ellipse(-20, bodyY - 28, 8, 15, 0.3, 0, Math.PI * 2);
-    ctx.ellipse(20, bodyY - 28, 8, 15, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  // 2) 실제 일러스트 크롭 스프라이트 이미지 렌더링
+  const spriteKey = preset.sprite || AVATAR_ID_MAP[player.avatarId] || player.avatarId;
+  const spriteImg = AVATAR_SPRITES[spriteKey];
+  const isSpriteLoaded = spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0;
 
-  // 3) 귀여운 SD 다리 & 신발 애니메이션
-  const leftFootY = bodyY - 6 + walkCycle * 5;
-  const rightFootY = bodyY - 6 - walkCycle * 5;
-  ctx.fillStyle = '#2b211b';
-  ctx.beginPath();
-  ctx.ellipse(-6, leftFootY, 5.5, 4.5, 0, 0, Math.PI * 2);
-  ctx.ellipse(6, rightFootY, 5.5, 4.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 4) SD 몸통 / 의상 (파스텔 코트, 원피스, 정장 등)
-  ctx.fillStyle = preset.outfit;
-  ctx.strokeStyle = '#3b281e';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(-11, bodyY - 25);
-  ctx.lineTo(11, bodyY - 25);
-  ctx.quadraticCurveTo(15, bodyY - 9, 13, bodyY - 8);
-  ctx.lineTo(-13, bodyY - 8);
-  ctx.quadraticCurveTo(-15, bodyY - 9, -11, bodyY - 25);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // 하의/치마 포인트
-  ctx.fillStyle = preset.bottom;
-  ctx.fillRect(-11, bodyY - 12, 22, 4);
-
-  // 넥타이/리본/지휘봉 액세서리
-  if (preset.acc === 'tie' || preset.acc === 'bowtie') {
-    ctx.fillStyle = '#e63946';
-    ctx.fillRect(-2, bodyY - 23, 4, 8);
-  } else if (preset.acc === 'ribbon' || preset.acc === 'bow') {
-    ctx.fillStyle = '#ff758f';
-    ctx.beginPath();
-    ctx.arc(0, bodyY - 22, 4, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // 5) 양팔 흔들기 (환호 시 만세)
-  const armSwing = isMoving ? walkCycle * 6 : 0;
-  ctx.fillStyle = preset.outfit;
-  ctx.strokeStyle = '#3b281e';
-  ctx.lineWidth = 1.8;
-  // 왼팔
-  ctx.beginPath();
-  if (status === 'cheering' || emote === '🙌') {
-    ctx.ellipse(-15, bodyY - 28, 4.5, 8, -0.5, 0, Math.PI * 2);
+  if (isSpriteLoaded) {
+    ctx.save();
+    if (dir === 'left') {
+      ctx.scale(-1, 1);
+    }
+    const sw = spriteImg.naturalWidth;
+    const sh = spriteImg.naturalHeight;
+    ctx.drawImage(spriteImg, -sw / 2, -sh + bodyY, sw, sh);
+    ctx.restore();
   } else {
-    ctx.ellipse(-14, bodyY - 18 + armSwing, 4.5, 7, 0.2, 0, Math.PI * 2);
-  }
-  ctx.fill();
-  ctx.stroke();
-  // 오른팔
-  ctx.beginPath();
-  if (status === 'cheering' || emote === '🙌') {
-    ctx.ellipse(15, bodyY - 28, 4.5, 8, 0.5, 0, Math.PI * 2);
-  } else {
-    ctx.ellipse(14, bodyY - 18 - armSwing, 4.5, 7, -0.2, 0, Math.PI * 2);
-  }
-  ctx.fill();
-  ctx.stroke();
+    // 2) 뒷머리 (롱헤어/트윈테일 등 - 폴백)
+    ctx.fillStyle = preset.hairColor;
+    if (['wavy_long', 'long_straight', 'half_tie'].includes(preset.hair)) {
+      ctx.beginPath();
+      ctx.ellipse(0, bodyY - 26, 20, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (preset.hair === 'twintail') {
+      ctx.beginPath();
+      ctx.ellipse(-20, bodyY - 28, 8, 15, 0.3, 0, Math.PI * 2);
+      ctx.ellipse(20, bodyY - 28, 8, 15, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-  // 지휘자일 경우 오른손에 지휘봉 표시
-  if (preset.acc === 'baton') {
-    ctx.strokeStyle = '#f8fafc';
+    // 3) 귀여운 SD 다리 & 신발 애니메이션
+    const leftFootY = bodyY - 6 + walkCycle * 5;
+    const rightFootY = bodyY - 6 - walkCycle * 5;
+    ctx.fillStyle = '#2b211b';
+    ctx.beginPath();
+    ctx.ellipse(-6, leftFootY, 5.5, 4.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(6, rightFootY, 5.5, 4.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 4) SD 몸통 / 의상 (파스텔 코트, 원피스, 정장 등)
+    ctx.fillStyle = preset.outfit;
+    ctx.strokeStyle = '#3b281e';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(16, bodyY - 20);
-    ctx.lineTo(26, bodyY - 32 + Math.sin(time * 8) * 4);
+    ctx.moveTo(-11, bodyY - 25);
+    ctx.lineTo(11, bodyY - 25);
+    ctx.quadraticCurveTo(15, bodyY - 9, 13, bodyY - 8);
+    ctx.lineTo(-13, bodyY - 8);
+    ctx.quadraticCurveTo(-15, bodyY - 9, -11, bodyY - 25);
+    ctx.closePath();
+    ctx.fill();
     ctx.stroke();
-  }
 
-  // 6) 동글동글한 SD 얼굴
-  const headY = bodyY - 40;
-  const dirOffsetX = dir === 'left' ? -2.5 : dir === 'right' ? 2.5 : 0;
+    // 하의/치마 포인트
+    ctx.fillStyle = preset.bottom;
+    ctx.fillRect(-11, bodyY - 12, 22, 4);
 
-  ctx.fillStyle = preset.skin;
-  ctx.strokeStyle = '#3b281e';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(0, headY, 17.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
+    // 넥타이/리본/지휘봉 액세서리
+    if (preset.acc === 'tie' || preset.acc === 'bowtie') {
+      ctx.fillStyle = '#e63946';
+      ctx.fillRect(-2, bodyY - 23, 4, 8);
+    } else if (preset.acc === 'ribbon' || preset.acc === 'bow') {
+      ctx.fillStyle = '#ff758f';
+      ctx.beginPath();
+      ctx.arc(0, bodyY - 22, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-  // 7) 눈, 볼터치, 표정 (방향이 위쪽 'up'이 아닐 때만 얼굴 이목구비 표시)
-  if (dir !== 'up') {
-    // 따뜻한 파스텔 핑크 볼터치
-    ctx.fillStyle = 'rgba(255, 130, 150, 0.55)';
+    // 5) 양팔 흔들기 (환호 시 만세)
+    const armSwing = isMoving ? walkCycle * 6 : 0;
+    ctx.fillStyle = preset.outfit;
+    ctx.strokeStyle = '#3b281e';
+    ctx.lineWidth = 1.8;
+    // 왼팔
     ctx.beginPath();
-    ctx.ellipse(-9 + dirOffsetX, headY + 4, 4, 2.5, 0, 0, Math.PI * 2);
-    ctx.ellipse(9 + dirOffsetX, headY + 4, 4, 2.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 눈 깜빡임 또는 추락 시 >< 표정
-    const isBlinking = Math.sin(time * 2.5 + (player.seed || 1)) > 0.96;
-    ctx.fillStyle = '#261811';
-    ctx.strokeStyle = '#261811';
-    ctx.lineWidth = 2;
-
-    if (status === 'falling') {
-      // 추락 중 당황한 눈 (><)
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('> <', dirOffsetX, headY + 3);
-    } else if (isBlinking || status === 'cheering') {
-      // 웃는 눈 (^^)
-      ctx.beginPath();
-      ctx.arc(-6.5 + dirOffsetX, headY + 1, 3.5, Math.PI, 0);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(6.5 + dirOffsetX, headY + 1, 3.5, Math.PI, 0);
-      ctx.stroke();
+    if (status === 'cheering' || emote === '🙌') {
+      ctx.ellipse(-15, bodyY - 28, 4.5, 8, -0.5, 0, Math.PI * 2);
     } else {
-      // 초롱초롱한 큰 눈 + 하이라이트
-      ctx.beginPath();
-      ctx.ellipse(-6.5 + dirOffsetX, headY + 1, 3, 4, 0, 0, Math.PI * 2);
-      ctx.ellipse(6.5 + dirOffsetX, headY + 1, 3, 4, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(-7.5 + dirOffsetX, headY - 1, 1.3, 0, Math.PI * 2);
-      ctx.arc(5.5 + dirOffsetX, headY - 1, 1.3, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.ellipse(-14, bodyY - 18 + armSwing, 4.5, 7, 0.2, 0, Math.PI * 2);
     }
+    ctx.fill();
+    ctx.stroke();
+    // 오른팔
+    ctx.beginPath();
+    if (status === 'cheering' || emote === '🙌') {
+      ctx.ellipse(15, bodyY - 28, 4.5, 8, 0.5, 0, Math.PI * 2);
+    } else {
+      ctx.ellipse(14, bodyY - 18 - armSwing, 4.5, 7, -0.2, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.stroke();
 
-    // 안경 착용 캐릭터 (민석 스타일)
-    if (preset.acc === 'glasses') {
-      ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = 1.4;
-      ctx.strokeRect(-11 + dirOffsetX, headY - 3, 8, 6);
-      ctx.strokeRect(3 + dirOffsetX, headY - 3, 8, 6);
+    // 지휘자일 경우 오른손에 지휘봉 표시
+    if (preset.acc === 'baton') {
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(-3 + dirOffsetX, headY);
-      ctx.lineTo(3 + dirOffsetX, headY);
+      ctx.moveTo(16, bodyY - 20);
+      ctx.lineTo(26, bodyY - 32 + Math.sin(time * 8) * 4);
       ctx.stroke();
     }
 
-    // 귀여운 입
-    ctx.strokeStyle = '#7c4032';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(dirOffsetX, headY + 5.5, 2.2, 0, Math.PI);
-    ctx.stroke();
-  }
+    // 6) 동글동글한 SD 얼굴
+    const headY = bodyY - 40;
+    const dirOffsetX = dir === 'left' ? -2.5 : dir === 'right' ? 2.5 : 0;
 
-  // 8) 앞머리 & 정수리 헤어스타일
-  ctx.fillStyle = preset.hairColor;
-  ctx.strokeStyle = '#3b281e';
-  ctx.lineWidth = 1.8;
-  ctx.beginPath();
-  if (dir === 'up') {
-    // 뒷모습일 때는 머리 전체 덮기
-    ctx.arc(0, headY, 18.2, 0, Math.PI * 2);
-  } else {
-    // 앞머리 볼륨
-    ctx.arc(0, headY - 4, 18, Math.PI * 0.92, Math.PI * 2.08);
-    ctx.quadraticCurveTo(8, headY - 6, 0, headY - 3);
-    ctx.quadraticCurveTo(-8, headY - 6, -17, headY - 2);
-  }
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // 베레모 모자 (소영 스타일)
-  if (preset.acc === 'beret') {
-    ctx.fillStyle = '#e6ccb2';
-    ctx.strokeStyle = '#5c4028';
+    ctx.fillStyle = preset.skin;
+    ctx.strokeStyle = '#3b281e';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.ellipse(2, headY - 16, 16, 7, -0.15, 0, Math.PI * 2);
+    ctx.arc(0, headY, 17.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    // 7) 눈, 볼터치, 표정 (방향이 위쪽 'up'이 아닐 때만 얼굴 이목구비 표시)
+    if (dir !== 'up') {
+      ctx.fillStyle = 'rgba(255, 130, 150, 0.55)';
+      ctx.beginPath();
+      ctx.ellipse(-9 + dirOffsetX, headY + 4, 4, 2.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(9 + dirOffsetX, headY + 4, 4, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const isBlinking = Math.sin(time * 2.5 + (player.seed || 1)) > 0.96;
+      ctx.fillStyle = '#261811';
+      ctx.strokeStyle = '#261811';
+      ctx.lineWidth = 2;
+
+      if (status === 'falling') {
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('> <', dirOffsetX, headY + 3);
+      } else if (isBlinking || status === 'cheering') {
+        ctx.beginPath();
+        ctx.arc(-6.5 + dirOffsetX, headY + 1, 3.5, Math.PI, 0);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(6.5 + dirOffsetX, headY + 1, 3.5, Math.PI, 0);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.ellipse(-6.5 + dirOffsetX, headY + 1, 3, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(6.5 + dirOffsetX, headY + 1, 3, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-7.5 + dirOffsetX, headY - 1, 1.3, 0, Math.PI * 2);
+        ctx.arc(5.5 + dirOffsetX, headY - 1, 1.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (preset.acc === 'glasses') {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1.4;
+        ctx.strokeRect(-11 + dirOffsetX, headY - 3, 8, 6);
+        ctx.strokeRect(3 + dirOffsetX, headY - 3, 8, 6);
+        ctx.beginPath();
+        ctx.moveTo(-3 + dirOffsetX, headY);
+        ctx.lineTo(3 + dirOffsetX, headY);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#7c4032';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(dirOffsetX, headY + 5.5, 2.2, 0, Math.PI);
+      ctx.stroke();
+    }
+
+    // 8) 앞머리 & 정수리 헤어스타일
+    ctx.fillStyle = preset.hairColor;
+    ctx.strokeStyle = '#3b281e';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    if (dir === 'up') {
+      ctx.arc(0, headY, 18.2, 0, Math.PI * 2);
+    } else {
+      ctx.arc(0, headY - 4, 18, Math.PI * 0.92, Math.PI * 2.08);
+      ctx.quadraticCurveTo(8, headY - 6, 0, headY - 3);
+      ctx.quadraticCurveTo(-8, headY - 6, -17, headY - 2);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    if (preset.acc === 'beret') {
+      ctx.fillStyle = '#e6ccb2';
+      ctx.strokeStyle = '#5c4028';
+      ctx.beginPath();
+      ctx.ellipse(2, headY - 16, 16, 7, -0.15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
   }
 
   ctx.restore();
@@ -1704,14 +1777,12 @@ function drawChibiAvatar(ctx, player, isMe, time) {
     ctx.save();
     const tagY = y + bodyY - 68;
 
-    // 감정표현 이모트 풍선
     if (emote) {
       ctx.font = '20px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(emote, x, tagY - 18 + Math.sin(time * 8) * 3);
     }
 
-    // 닉네임 캡슐 배지
     ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
     const displayNick = status === 'spectator' ? `👻 ${player.nickname}` : player.nickname;
     const textWidth = ctx.measureText(displayNick).width;
@@ -1734,42 +1805,22 @@ function drawChibiAvatar(ctx, player, isMe, time) {
   }
 }
 
-// 3.5 아바타 선택용 실물 미니 캔버스 컴포넌트
+// 3.5 아바타 선택용 실물 미니 컴포넌트 (일러스트 크롭 실물 스프라이트 렌더링)
 function AvatarThumbnail({ avatarId, size = 64 }) {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, size, size);
-
-    ctx.save();
-    // 캔버스 크기에 맞춰 캐릭터 스케일 조절 (원본 높이 약 75px)
-    const scale = size / 75;
-    ctx.scale(scale, scale);
-
-    const mockPlayer = {
-      avatarId,
-      x: 37.5,
-      y: 67,
-      dir: 'down',
-      isMoving: false,
-      status: 'alive',
-      nickname: '', // 닉네임 배지 없이 순수 캐릭터 렌더링
-      seed: 0
-    };
-    drawChibiAvatar(ctx, mockPlayer, false, 0);
-    ctx.restore();
-  }, [avatarId, size]);
+  const preset = AVATAR_PRESETS.find((p) => p.id === avatarId) || AVATAR_PRESETS[0];
+  const spriteKey = preset?.sprite || AVATAR_ID_MAP[avatarId] || avatarId;
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={size}
-      height={size}
-      className="mx-auto block pointer-events-none drop-shadow"
-    />
+    <div
+      className="flex items-center justify-center overflow-hidden"
+      style={{ width: `${size}px`, height: `${size}px` }}
+    >
+      <img
+        src={`${import.meta.env.BASE_URL}avatars/${spriteKey}.png`}
+        alt={preset?.name || avatarId}
+        className="max-w-full max-h-full object-contain drop-shadow pointer-events-none select-none transition-transform hover:scale-105"
+      />
+    </div>
   );
 }
 
@@ -1912,8 +1963,10 @@ export default function App() {
       if (!p.nickname) return;
       // 3. 내 자신은 로그인 완료 전까지 렌더링 제외 (스크린 모드 제외)
       if (p.id === myId && !hasJoined && viewMode !== 'screen') return;
-      // 4. 내 자신이 아닌 다른 세션은 40초 이상 비활성이면 오프라인 간주하여 배제 (유령 예진 완벽 차단!)
-      if (p.id !== myId && p.lastActive && (now - p.lastActive > 40000)) return;
+      // 4. 내 자신이 아닌 다른 세션은 lastActive가 없거나 30초 이상 비활성이면 오프라인 간주하여 제외 (유령 예진 완벽 차단!)
+      if (p.id !== myId) {
+        if (!p.lastActive || (now - p.lastActive > 30000)) return;
+      }
 
       // 5. 동일 닉네임은 무조건 최신 활동 세션 1개만 허용
       const existing = map.get(p.nickname);
@@ -2029,8 +2082,8 @@ export default function App() {
             deleteDoc(doc(db, 'hanwoori_party_players', docSnap.id)).catch(() => {});
             return;
           }
-          // 2. 최근 45초 이상 비활성인 유령 세션(과거의 예진 등)은 Firestore에서 자동 삭제
-          if (data.id !== myId && data.lastActive && (now - data.lastActive > 45000)) {
+          // 2. lastActive가 없거나 30초 이상 비활성인 유령 세션(과거의 예진 등)은 Firestore에서 자동 영구 삭제
+          if (data.id !== myId && (!data.lastActive || (now - data.lastActive > 30000))) {
             deleteDoc(doc(db, 'hanwoori_party_players', docSnap.id)).catch(() => {});
             return;
           }
