@@ -83,27 +83,27 @@ const OFFICIAL_MEMBERS = [
   { no: 19, name: '이상언', shortName: '상언', phone: '4015', avatarId: 'sangeon', isAdmin: false },
 ];
 
-// 한우리 합창단 20기 공식 단원 19명 SD 캐릭터 프리셋
+// 한우리 합창단 20기 귀여운 SD 캐릭터 프리셋 (총 19종 스타일)
 const AVATAR_PRESETS = [
-  { id: 'yejin', name: '1. 최예진', defaultNick: '최예진', hair: 'wavy_long', hairColor: '#b88658', outfit: '#e8d8c8', bottom: '#5c4636', acc: 'ribbon', skin: '#ffe8dc' },
-  { id: 'jua', name: '2. 송주아', defaultNick: '송주아', hair: 'twintail', hairColor: '#e87a90', outfit: '#f4a7b9', bottom: '#3b4254', acc: 'hairpin', skin: '#ffeaf0' },
-  { id: 'byungsoo', name: '3. 심병수', defaultNick: '심병수', hair: 'neat_boy', hairColor: '#242024', outfit: '#2b3548', bottom: '#1e2430', acc: 'tie', skin: '#ffe2d1' },
-  { id: 'wonbae', name: '4. 이원배', defaultNick: '이원배', hair: 'parted_boy', hairColor: '#232b38', outfit: '#eef2f7', bottom: '#2e3846', acc: 'glasses', skin: '#ffe2d1' },
-  { id: 'seunghwan', name: '5. 한승환', defaultNick: '한승환', hair: 'medium_wave', hairColor: '#5c3c24', outfit: '#eee5d8', bottom: '#4a3b2c', acc: 'none', skin: '#ffe4d6' },
-  { id: 'taeyul', name: '6. 고태율', defaultNick: '고태율', hair: 'neat_boy', hairColor: '#1f242d', outfit: '#2c3038', bottom: '#1f2229', acc: 'badge', skin: '#ffe4d6' },
-  { id: 'jehwan', name: '7. 사제환', defaultNick: '사제환', hair: 'round_boy', hairColor: '#634735', outfit: '#f5ebe6', bottom: '#4d392d', acc: 'vest', skin: '#ffe4d6' },
-  { id: 'hyunjoo', name: '8. 이현주', defaultNick: '이현주', hair: 'bob_cute', hairColor: '#b5926b', outfit: '#697a8c', bottom: '#3a4450', acc: 'collar', skin: '#ffe6d8' },
-  { id: 'kyunghwan', name: '9. 이경환', defaultNick: '이경환', hair: 'short_parted', hairColor: '#594233', outfit: '#f7f3ef', bottom: '#42352b', acc: 'note', skin: '#ffe4d6' },
-  { id: 'jieun', name: '10. 최지은', defaultNick: '최지은', hair: 'long_straight', hairColor: '#3b2e35', outfit: '#f0e6ec', bottom: '#483b42', acc: 'headband', skin: '#ffe8e8' },
-  { id: 'inae', name: '11. 김인애', defaultNick: '김인애', hair: 'half_tie', hairColor: '#6b442a', outfit: '#d96b6b', bottom: '#f5e6e8', acc: 'bow', skin: '#ffe6d8' },
-  { id: 'yujeong', name: '12. 이유정', defaultNick: '이유정', hair: 'braid_warm', hairColor: '#69462d', outfit: '#d9c2a6', bottom: '#5c4330', acc: 'beret', skin: '#ffe6d8' },
-  { id: 'yubin', name: '13. 황유빈', defaultNick: '황유빈', hair: 'wavy_long', hairColor: '#332824', outfit: '#f5efe8', bottom: '#382c26', acc: 'flower', skin: '#ffe8dc' },
-  { id: 'dongwon', name: '14. 황동원', defaultNick: '황동원', hair: 'short_parted', hairColor: '#2c262b', outfit: '#3b4254', bottom: '#1e2430', acc: 'tie', skin: '#ffe4d6' },
-  { id: 'dasol', name: '15. 김다솔', defaultNick: '김다솔', hair: 'wavy_long', hairColor: '#7c4d28', outfit: '#d8f3dc', bottom: '#2d6a4f', acc: 'flower', skin: '#ffe8dc' },
-  { id: 'conductor', name: '16. 김석준 (관리자)', defaultNick: '김석준', hair: 'short_parted', hairColor: '#3a2618', outfit: '#f5efe6', bottom: '#2b2b2b', acc: 'baton', skin: '#ffe4d6' },
-  { id: 'minwoo', name: '17. 이민우', defaultNick: '이민우', hair: 'neat_boy', hairColor: '#2b2430', outfit: '#3e4a61', bottom: '#1f2430', acc: 'bowtie', skin: '#ffe2d1' },
-  { id: 'daegeon', name: '18. 이대건', defaultNick: '이대건', hair: 'short_parted', hairColor: '#362b28', outfit: '#3b5249', bottom: '#1f2421', acc: 'badge', skin: '#ffe4d6' },
-  { id: 'sangeon', name: '19. 이상언', defaultNick: '이상언', hair: 'parted_boy', hairColor: '#1e2430', outfit: '#e9ecef', bottom: '#343a40', acc: 'collar', skin: '#ffe2d1' },
+  { id: 'yejin', name: '웨이브 로맨틱', defaultNick: '단원', hair: 'wavy_long', hairColor: '#b88658', outfit: '#e8d8c8', bottom: '#5c4636', acc: 'ribbon', skin: '#ffe8dc' },
+  { id: 'jua', name: '발랄 핑키트윈', defaultNick: '단원', hair: 'twintail', hairColor: '#e87a90', outfit: '#f4a7b9', bottom: '#3b4254', acc: 'hairpin', skin: '#ffeaf0' },
+  { id: 'byungsoo', name: '클래식 수트타이', defaultNick: '단원', hair: 'neat_boy', hairColor: '#242024', outfit: '#2b3548', bottom: '#1e2430', acc: 'tie', skin: '#ffe2d1' },
+  { id: 'wonbae', name: '스마트 글래스', defaultNick: '단원', hair: 'parted_boy', hairColor: '#232b38', outfit: '#eef2f7', bottom: '#2e3846', acc: 'glasses', skin: '#ffe2d1' },
+  { id: 'seunghwan', name: '내추럴 웨이브', defaultNick: '단원', hair: 'medium_wave', hairColor: '#5c3c24', outfit: '#eee5d8', bottom: '#4a3b2c', acc: 'none', skin: '#ffe4d6' },
+  { id: 'taeyul', name: '시크 다크네이비', defaultNick: '단원', hair: 'neat_boy', hairColor: '#1f242d', outfit: '#2c3038', bottom: '#1f2229', acc: 'badge', skin: '#ffe4d6' },
+  { id: 'jehwan', name: '클래식 베스트', defaultNick: '단원', hair: 'round_boy', hairColor: '#634735', outfit: '#f5ebe6', bottom: '#4d392d', acc: 'vest', skin: '#ffe4d6' },
+  { id: 'hyunjoo', name: '단발 큐트칼라', defaultNick: '단원', hair: 'bob_cute', hairColor: '#b5926b', outfit: '#697a8c', bottom: '#3a4450', acc: 'collar', skin: '#ffe6d8' },
+  { id: 'kyunghwan', name: '소프트 파티드', defaultNick: '단원', hair: 'short_parted', hairColor: '#594233', outfit: '#f7f3ef', bottom: '#42352b', acc: 'note', skin: '#ffe4d6' },
+  { id: 'jieun', name: '청순 롱스트레이트', defaultNick: '단원', hair: 'long_straight', hairColor: '#3b2e35', outfit: '#f0e6ec', bottom: '#483b42', acc: 'headband', skin: '#ffe8e8' },
+  { id: 'inae', name: '레드보우 하프타이', defaultNick: '단원', hair: 'half_tie', hairColor: '#6b442a', outfit: '#d96b6b', bottom: '#f5e6e8', acc: 'bow', skin: '#ffe6d8' },
+  { id: 'yujeong', name: '브라운 베레모', defaultNick: '단원', hair: 'braid_warm', hairColor: '#69462d', outfit: '#d9c2a6', bottom: '#5c4330', acc: 'beret', skin: '#ffe6d8' },
+  { id: 'yubin', name: '플라워 웨이브', defaultNick: '단원', hair: 'wavy_long', hairColor: '#332824', outfit: '#f5efe8', bottom: '#382c26', acc: 'flower', skin: '#ffe8dc' },
+  { id: 'dongwon', name: '모던 숏파트', defaultNick: '단원', hair: 'short_parted', hairColor: '#2c262b', outfit: '#3b4254', bottom: '#1e2430', acc: 'tie', skin: '#ffe4d6' },
+  { id: 'dasol', name: '에메랄드 드레스', defaultNick: '단원', hair: 'wavy_long', hairColor: '#7c4d28', outfit: '#d8f3dc', bottom: '#2d6a4f', acc: 'flower', skin: '#ffe8dc' },
+  { id: 'conductor', name: '마에스트로 연주복', defaultNick: '단원', hair: 'short_parted', hairColor: '#3a2618', outfit: '#f5efe6', bottom: '#2b2b2b', acc: 'baton', skin: '#ffe4d6' },
+  { id: 'minwoo', name: '보타이 네이비', defaultNick: '단원', hair: 'neat_boy', hairColor: '#2b2430', outfit: '#3e4a61', bottom: '#1f2430', acc: 'bowtie', skin: '#ffe2d1' },
+  { id: 'daegeon', name: '딥그린 숏파트', defaultNick: '단원', hair: 'short_parted', hairColor: '#362b28', outfit: '#3b5249', bottom: '#1f2421', acc: 'badge', skin: '#ffe4d6' },
+  { id: 'sangeon', name: '모던 라이트그레이', defaultNick: '단원', hair: 'parted_boy', hairColor: '#1e2430', outfit: '#e9ecef', bottom: '#343a40', acc: 'collar', skin: '#ffe2d1' },
 ];
 
 // 음악실 로비 내 가구 충돌 박스 및 Y-Sorting(깊이 정렬) 기준선 정의
@@ -1609,7 +1609,9 @@ export default function App() {
   const [hasJoined, setHasJoined] = useState(false);
   const [userNameInput, setUserNameInput] = useState('');
   const [phoneLast4Input, setPhoneLast4Input] = useState('');
-  const [loginAvatarId, setLoginAvatarId] = useState('yejin');
+  const [loginAvatarId, setLoginAvatarId] = useState(() => {
+    return AVATAR_PRESETS[Math.floor(Math.random() * AVATAR_PRESETS.length)].id;
+  });
   const [myNickname, setMyNickname] = useState('');
   const [myPhoneLast4, setMyPhoneLast4] = useState('');
   const [myAvatarId, setMyAvatarId] = useState('yejin');
@@ -1932,7 +1934,7 @@ export default function App() {
       setAdminUnlocked(true);
     }
 
-    const assignedAvatarId = loginAvatarId !== 'yejin' ? loginAvatarId : member.avatarId;
+    const assignedAvatarId = loginAvatarId || member.avatarId || AVATAR_PRESETS[0].id;
     const finalNick = member.name;
     const finalPhone = cleanPhone || member.phone || '0000';
     const playerId = `u_${finalPhone}_${member.name}`;
@@ -3391,39 +3393,9 @@ export default function App() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-amber-300">
-                    1. 본인 이름 (단원 선택 또는 입력)
+                    1. 본인 이름 (직접 입력)
                   </label>
-                  <span className="text-[10px] text-stone-400">총 {OFFICIAL_MEMBERS.length}명 등록됨</span>
-                </div>
-
-                {/* 단원 빠른 선택 칩 목록 */}
-                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1.5 bg-stone-950 rounded-xl border border-stone-800">
-                  {OFFICIAL_MEMBERS.map((m) => {
-                    const isSelected = userNameInput === m.name || userNameInput === m.shortName;
-                    return (
-                      <button
-                        key={m.no}
-                        type="button"
-                        onClick={() => {
-                          setUserNameInput(m.name);
-                          setLoginAvatarId(m.avatarId);
-                          if (m.phone) {
-                            setPhoneLast4Input('');
-                          } else {
-                            setPhoneLast4Input('0000');
-                          }
-                        }}
-                        className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition border ${
-                          isSelected
-                            ? 'bg-amber-500 text-stone-950 border-amber-300 font-bold scale-95 shadow'
-                            : 'bg-stone-900 hover:bg-stone-800 text-stone-300 border-stone-800'
-                        }`}
-                      >
-                        {m.name}
-                        {m.isAdmin && <span className="text-[9px] text-rose-400 ml-0.5">★</span>}
-                      </button>
-                    );
-                  })}
+                  <span className="text-[10px] text-stone-400">한우리 20기 단원</span>
                 </div>
 
                 <input
@@ -3431,7 +3403,7 @@ export default function App() {
                   required
                   value={userNameInput}
                   onChange={(e) => setUserNameInput(e.target.value)}
-                  placeholder="위에서 이름을 누르거나 직접 입력하세요 (예: 최예진)"
+                  placeholder="본인 성함을 직접 입력하세요 (예: 최예진)"
                   maxLength={10}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-700 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-amber-400"
                 />
@@ -3471,9 +3443,16 @@ export default function App() {
                   <label className="text-xs font-bold text-amber-300">
                     3. 내 캐릭터 아바타 선택
                   </label>
-                  <span className="text-[11px] text-amber-400 font-semibold">
-                    {AVATAR_PRESETS.find((a) => a.id === loginAvatarId)?.name}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const randomIdx = Math.floor(Math.random() * AVATAR_PRESETS.length);
+                      setLoginAvatarId(AVATAR_PRESETS[randomIdx].id);
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/40 text-[11px] font-bold transition active:scale-95 cursor-pointer"
+                  >
+                    🎲 랜덤으로 뽑기
+                  </button>
                 </div>
 
                 {/* 선택된 아바타 실물 하이라이트 미리보기 */}
@@ -3482,16 +3461,17 @@ export default function App() {
                     <AvatarThumbnail avatarId={loginAvatarId} size={64} />
                   </div>
                   <div className="flex-1 text-xs">
-                    <div className="font-bold text-amber-200 text-sm">
-                      {AVATAR_PRESETS.find((a) => a.id === loginAvatarId)?.name}
+                    <div className="font-bold text-amber-200 text-sm flex items-center gap-1.5">
+                      <span>{AVATAR_PRESETS.find((a) => a.id === loginAvatarId)?.name}</span>
+                      <span className="text-[10px] font-normal text-stone-400 bg-stone-800 px-1.5 py-0.5 rounded">선택됨</span>
                     </div>
-                    <p className="text-[11px] text-stone-400">
-                      로비와 퀴즈방에서 실제로 움직이는 내 귀여운 SD 캐릭터입니다!
+                    <p className="text-[11px] text-stone-400 mt-0.5">
+                      랜덤 버튼을 누르거나 아래 목록에서 원하는 캐릭터를 터치해 고를 수 있습니다!
                     </p>
                   </div>
                 </div>
 
-                {/* 아바타 18종 실물 그리드 (실제 게임 화면 캐릭터 렌더링) */}
+                {/* 아바타 19종 실물 그리드 (실제 게임 화면 캐릭터 렌더링) */}
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-44 overflow-y-auto p-1.5 bg-stone-950 rounded-2xl border border-stone-800">
                   {AVATAR_PRESETS.map((av) => {
                     const isSelected = loginAvatarId === av.id;
@@ -3508,7 +3488,7 @@ export default function App() {
                       >
                         <AvatarThumbnail avatarId={av.id} size={48} />
                         <div className={`truncate text-[10px] mt-0.5 w-full font-bold ${isSelected ? 'text-amber-300' : 'text-stone-300'}`}>
-                          {av.name.replace(/^[0-9★🎼\.\s]+/, '')}
+                          {av.name}
                         </div>
                       </button>
                     );
