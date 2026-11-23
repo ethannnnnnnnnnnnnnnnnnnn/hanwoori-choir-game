@@ -1597,6 +1597,54 @@ function AvatarThumbnail({ avatarId, size = 64 }) {
   );
 }
 
+// 관리자 시뮬레이션용 AI 단원 봇 생성 헬퍼 (기본 꺼짐)
+function createInitialBots() {
+  const initialSpots = [
+    { presetIdx: 15, x: 545, y: 315 },
+    { presetIdx: 0, x: 310, y: 505 },
+    { presetIdx: 1, x: 535, y: 655 },
+    { presetIdx: 2, x: 405, y: 565 },
+    { presetIdx: 3, x: 795, y: 745 },
+    { presetIdx: 4, x: 585, y: 560 },
+    { presetIdx: 5, x: 880, y: 645 },
+    { presetIdx: 6, x: 430, y: 685 },
+    { presetIdx: 7, x: 960, y: 525 },
+    { presetIdx: 8, x: 175, y: 495 },
+    { presetIdx: 9, x: 350, y: 770 },
+    { presetIdx: 10, x: 775, y: 575 },
+    { presetIdx: 11, x: 995, y: 745 },
+    { presetIdx: 12, x: 465, y: 430 },
+    { presetIdx: 13, x: 640, y: 495 },
+    { presetIdx: 14, x: 840, y: 445 },
+    { presetIdx: 16, x: 600, y: 610 },
+  ];
+  return initialSpots.map((spot, idx) => {
+    const p = AVATAR_PRESETS[spot.presetIdx] || AVATAR_PRESETS[0];
+    return {
+      id: `bot_${p.id}_${idx}`,
+      nickname: `AI단원 ${idx + 1}`,
+      avatarId: p.id,
+      isBot: true,
+      room: 'lobby',
+      x: spot.x,
+      y: spot.y,
+      targetX: null,
+      targetY: null,
+      dir: 'down',
+      isMoving: false,
+      status: 'alive',
+      fallProgress: 0,
+      selectedChoice: null,
+      score: 0,
+      correctCount: 0,
+      wins: 0,
+      gamesPlayed: 1,
+      emote: null,
+      seed: idx * 1.7
+    };
+  });
+}
+
 // ==========================================
 // 4. MAIN APPLICATION COMPONENT
 // ==========================================
@@ -1643,56 +1691,9 @@ export default function App() {
     lastWinnerName: '',
   });
 
-  // 참가자 전체 목록 (요청하신 실제 단원 16명 + 김다솔 + 지휘자 초기 배치)
-  const [players, setPlayers] = useState(() => {
-    const initialSpots = [
-      { presetIdx: 17, x: 545, y: 315 }, // 지휘자
-      { presetIdx: 0, x: 310, y: 505 },  // 1. 예진
-      { presetIdx: 1, x: 535, y: 655 },  // 2. 주아
-      { presetIdx: 2, x: 405, y: 565 },  // 3. 병수
-      { presetIdx: 3, x: 795, y: 745 },  // 4. 원배 (LG)
-      { presetIdx: 4, x: 585, y: 560 },  // 5. 승환
-      { presetIdx: 5, x: 880, y: 645 },  // 6. 태율
-      { presetIdx: 6, x: 430, y: 685 },  // 7. 제환
-      { presetIdx: 7, x: 960, y: 525 },  // 8. 현주(ㄴ)
-      { presetIdx: 8, x: 175, y: 495 },  // 9. 경환
-      { presetIdx: 9, x: 350, y: 770 },  // 10. 지은
-      { presetIdx: 10, x: 775, y: 575 }, // 11. 인애
-      { presetIdx: 11, x: 995, y: 745 }, // 12. 유정
-      { presetIdx: 12, x: 465, y: 430 }, // 13. 유빈♥
-      { presetIdx: 13, x: 640, y: 495 }, // 14. 규민
-      { presetIdx: 14, x: 840, y: 445 }, // 15. 동원
-      { presetIdx: 15, x: 260, y: 600 }, // 16. 다석
-      { presetIdx: 16, x: 600, y: 610 }, // ★ 김다솔 (다솔이 문제 때 단원들이 쫓아다니는 주인공!)
-    ];
-    return initialSpots.map((spot, idx) => {
-      const p = AVATAR_PRESETS[spot.presetIdx];
-      return {
-        id: `bot_${p.id}`,
-        nickname: p.defaultNick,
-        avatarId: p.id,
-        isBot: true,
-        room: 'lobby',
-        x: spot.x,
-        y: spot.y,
-        targetX: null,
-        targetY: null,
-        dir: 'down',
-        isMoving: false,
-        status: 'alive', // 'alive' | 'falling' | 'spectator' | 'cheering'
-        fallProgress: 0,
-        selectedChoice: null, // 'A' | 'B' | null
-        score: (idx % 4) * 10,
-        correctCount: idx % 4,
-        wins: idx === 1 ? 1 : 0,
-        gamesPlayed: 1,
-        emote: p.id === 'dasol' ? '🌲' : null,
-        seed: idx * 1.7
-      };
-    });
-  });
-
-  const [botsEnabled, setBotsEnabled] = useState(true);
+  // 참가자 전체 목록 (기본은 빈 배열 - 실제 로그인한 단원들만 실시간으로 등장하여 활동합니다)
+  const [players, setPlayers] = useState([]);
+  const [botsEnabled, setBotsEnabled] = useState(false);
   const [adminUnlocked, setAdminUnlocked] = useState(true);
   const [adminPinInput, setAdminPinInput] = useState('');
   const [newQuizForm, setNewQuizForm] = useState({
@@ -1825,36 +1826,36 @@ export default function App() {
           remotePlayers.push(docSnap.data());
         });
 
-        if (remotePlayers.length > 0) {
-          setPlayers((prev) => {
-            // 원격에 있는 플레이어들과 로컬 플레이어 병합
-            const map = new Map();
-            // 1. 기존 봇 유지
+        setPlayers((prev) => {
+          // 원격에 있는 플레이어들과 로컬 플레이어 병합
+          const map = new Map();
+          // 1. 봇이 활성화되어 있을 때만 기존 봇 유지
+          if (botsEnabled) {
             prev.filter((p) => p.isBot).forEach((bot) => map.set(bot.id, bot));
-            // 2. 원격 플레이어 적용
-            remotePlayers.forEach((rp) => {
-              if (rp.id === myId) {
-                // 내 캐릭터는 로컬의 빠른 이동을 유지하되 점수/상태 등 서버 변경사항 동기화
-                const current = prev.find((p) => p.id === myId) || rp;
-                map.set(myId, {
-                  ...current,
-                  score: rp.score !== undefined ? rp.score : current.score,
-                  wins: rp.wins !== undefined ? rp.wins : current.wins,
-                  correctCount: rp.correctCount !== undefined ? rp.correctCount : current.correctCount,
-                  status: rp.status || current.status,
-                });
-              } else {
-                map.set(rp.id, rp);
-              }
-            });
-            return Array.from(map.values());
+          }
+          // 2. 원격 플레이어 적용 (실제 로그인한 단원들)
+          remotePlayers.forEach((rp) => {
+            if (rp.id === myId) {
+              // 내 캐릭터는 로컬의 빠른 이동을 유지하되 점수/상태 등 서버 변경사항 동기화
+              const current = prev.find((p) => p.id === myId) || rp;
+              map.set(myId, {
+                ...current,
+                score: rp.score !== undefined ? rp.score : current.score,
+                wins: rp.wins !== undefined ? rp.wins : current.wins,
+                correctCount: rp.correctCount !== undefined ? rp.correctCount : current.correctCount,
+                status: rp.status || current.status,
+              });
+            } else {
+              map.set(rp.id, rp);
+            }
           });
-        }
+          return Array.from(map.values());
+        });
       },
       (err) => console.warn('Firestore players snapshot warning:', err)
     );
     return () => unsub();
-  }, [user, myId]);
+  }, [user, myId, botsEnabled]);
 
   // ==========================================
   // 6. COLLISION DETECTION & MOVEMENT ENGINE
@@ -2288,6 +2289,9 @@ export default function App() {
 
           // 1) 내 캐릭터 조작 처리
           if (p.id === myId) {
+            if (!hasJoined && viewMode !== 'screen') {
+              return p; // 로그인 전에는 맵에서 이동하지 않음
+            }
             if (hasManualInput) {
               // 수동 조작 시 자동 이동(targetX/Y) 즉시 취소
               nextTargetX = null;
@@ -2430,9 +2434,15 @@ export default function App() {
 
           // 2) Y-Sorting: 가구 오브젝트들과 참가자 아바타들을 Y좌표 기준으로 정렬하여 렌더링
           const furnitureList = getFurnitureDrawables(gameState.noticeText);
+          const visiblePlayers = players.filter((p) => {
+            if (p.isBot && !botsEnabled) return false;
+            if (p.id === myId && !hasJoined && viewMode !== 'screen') return false;
+            return true;
+          });
+
           const renderables = [
             ...furnitureList.map((f) => ({ type: 'furniture', sortY: f.sortY, draw: f.draw })),
-            ...players.map((p) => ({
+            ...visiblePlayers.map((p) => ({
               type: 'avatar',
               sortY: p.y,
               draw: (c) => drawChibiAvatar(c, p, p.id === myId, time)
@@ -2468,7 +2478,13 @@ export default function App() {
           // 퀴즈방 (음악 퀴즈방 / 인물 퀴즈방) 렌더링
           drawQuizRoomBackground(ctx, time, gameState, currentQuiz);
 
-          const sortedPlayers = [...players].sort((a, b) => a.y - b.y);
+          const sortedPlayers = [...players]
+            .filter((p) => {
+              if (p.isBot && !botsEnabled) return false;
+              if (p.id === myId && !hasJoined && viewMode !== 'screen') return false;
+              return true;
+            })
+            .sort((a, b) => a.y - b.y);
           sortedPlayers.forEach((p) => drawChibiAvatar(ctx, p, p.id === myId, time));
         }
       }
@@ -3290,12 +3306,27 @@ export default function App() {
                   3단계: 합창단 AI 시뮬레이션 & 공지사항
                 </h3>
                 <button
-                  onClick={() => setBotsEnabled((v) => !v)}
+                  onClick={() => {
+                    setBotsEnabled((prevEnabled) => {
+                      const next = !prevEnabled;
+                      if (next) {
+                        setPlayers((curr) => {
+                          const bots = createInitialBots();
+                          const map = new Map(curr.map((p) => [p.id, p]));
+                          bots.forEach((b) => map.set(b.id, b));
+                          return Array.from(map.values());
+                        });
+                      } else {
+                        setPlayers((curr) => curr.filter((p) => !p.isBot));
+                      }
+                      return next;
+                    });
+                  }}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${
                     botsEnabled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-stone-800 text-stone-400'
                   }`}
                 >
-                  {botsEnabled ? '🤖 AI 단원 15명 활성중' : '🤖 AI 단원 일시정지'}
+                  {botsEnabled ? '🤖 테스트용 AI 단원 활성중' : '🤖 테스트용 AI 단원 소환 (기본 꺼짐)'}
                 </button>
               </div>
               <div className="flex gap-1.5">
