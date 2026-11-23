@@ -1,0 +1,3318 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import {
+  Music, Users, Trophy, Settings, Play, Pause, RotateCcw,
+  Volume2, VolumeX, Eye, Shield, Sparkles, CheckCircle2,
+  XCircle, DoorOpen, Lock, Unlock, UserPlus, HelpCircle,
+  ChevronRight, ChevronLeft, Award, Crown, Compass, Layers,
+  Smartphone, Monitor, Sliders, Bell, Heart, HandMetal, Smile,
+  ArrowUp, ArrowDown, ArrowLeft, ArrowRight, RefreshCw, LogOut,
+  Plus, Trash2, Edit3, Check, AlertTriangle, Radio
+} from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import {
+  getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged
+} from 'firebase/auth';
+import {
+  getFirestore, doc, setDoc, getDoc, onSnapshot, collection, updateDoc, deleteDoc
+} from 'firebase/firestore';
+
+// ==========================================
+// 0. FIREBASE & MULTIPLAYER INITIALIZATION
+// ==========================================
+let app = null;
+let auth = null;
+let db = null;
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'hanwoori-choir-20th';
+
+try {
+  let firebaseConfig = null;
+  if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+    firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+  } else if (import.meta.env && import.meta.env.VITE_FIREBASE_CONFIG) {
+    firebaseConfig = JSON.parse(import.meta.env.VITE_FIREBASE_CONFIG);
+  }
+
+  if (firebaseConfig) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  }
+} catch (e) {
+  console.warn('Firebase init fallback to local BroadcastChannel mode:', e);
+}
+
+// ==========================================
+// 1. CONSTANTS, AVATAR PRESETS & SAMPLE QUIZZES
+// ==========================================
+const MAP_WIDTH = 1200;
+const MAP_HEIGHT = 800;
+
+// 한우리 합창단 20기 실제 단원 16명 + 지휘자 + 김다솔 특별 캐릭터 프리셋 (독립 SD 아바타)
+const AVATAR_PRESETS = [
+  { id: 'yejin', name: '1. 예진', defaultNick: '예진', hair: 'wavy_long', hairColor: '#b88658', outfit: '#e8d8c8', bottom: '#5c4636', acc: 'ribbon', skin: '#ffe8dc' },
+  { id: 'jua', name: '2. 주아', defaultNick: '주아', hair: 'twintail', hairColor: '#e87a90', outfit: '#f4a7b9', bottom: '#3b4254', acc: 'hairpin', skin: '#ffeaf0' },
+  { id: 'byungsoo', name: '3. 병수', defaultNick: '병수', hair: 'neat_boy', hairColor: '#242024', outfit: '#2b3548', bottom: '#1e2430', acc: 'tie', skin: '#ffe2d1' },
+  { id: 'wonbae', name: '4. 원배 (LG)', defaultNick: '원배 (LG)', hair: 'parted_boy', hairColor: '#232b38', outfit: '#eef2f7', bottom: '#2e3846', acc: 'glasses', skin: '#ffe2d1' },
+  { id: 'seunghwan', name: '5. 승환', defaultNick: '승환', hair: 'medium_wave', hairColor: '#5c3c24', outfit: '#eee5d8', bottom: '#4a3b2c', acc: 'none', skin: '#ffe4d6' },
+  { id: 'taeyul', name: '6. 태율', defaultNick: '태율', hair: 'neat_boy', hairColor: '#1f242d', outfit: '#2c3038', bottom: '#1f2229', acc: 'badge', skin: '#ffe4d6' },
+  { id: 'jehwan', name: '7. 제환', defaultNick: '제환', hair: 'round_boy', hairColor: '#634735', outfit: '#f5ebe6', bottom: '#4d392d', acc: 'vest', skin: '#ffe4d6' },
+  { id: 'hyunjoo', name: '8. 현주(ㄴ)', defaultNick: '현주(ㄴ)', hair: 'bob_cute', hairColor: '#b5926b', outfit: '#697a8c', bottom: '#3a4450', acc: 'collar', skin: '#ffe6d8' },
+  { id: 'kyunghwan', name: '9. 경환', defaultNick: '경환', hair: 'short_parted', hairColor: '#594233', outfit: '#f7f3ef', bottom: '#42352b', acc: 'note', skin: '#ffe4d6' },
+  { id: 'jieun', name: '10. 지은', defaultNick: '지은', hair: 'long_straight', hairColor: '#3b2e35', outfit: '#f0e6ec', bottom: '#483b42', acc: 'headband', skin: '#ffe8e8' },
+  { id: 'inae', name: '11. 인애', defaultNick: '인애', hair: 'half_tie', hairColor: '#6b442a', outfit: '#d96b6b', bottom: '#f5e6e8', acc: 'bow', skin: '#ffe6d8' },
+  { id: 'yujeong', name: '12. 유정', defaultNick: '유정', hair: 'braid_warm', hairColor: '#69462d', outfit: '#d9c2a6', bottom: '#5c4330', acc: 'beret', skin: '#ffe6d8' },
+  { id: 'yubin', name: '13. 유빈♥', defaultNick: '유빈♥', hair: 'wavy_long', hairColor: '#332824', outfit: '#f5efe8', bottom: '#382c26', acc: 'flower', skin: '#ffe8dc' },
+  { id: 'gyumin', name: '14. 규민', defaultNick: '규민', hair: 'neat_boy', hairColor: '#8c583a', outfit: '#3b2d26', bottom: '#241c18', acc: 'bowtie', skin: '#ffe2d1' },
+  { id: 'dongwon', name: '15. 동원', defaultNick: '동원', hair: 'short_parted', hairColor: '#2c262b', outfit: '#3b4254', bottom: '#1e2430', acc: 'tie', skin: '#ffe4d6' },
+  { id: 'daseok', name: '16. 다석', defaultNick: '다석', hair: 'round_boy', hairColor: '#4a3525', outfit: '#e6d8df', bottom: '#3a3238', acc: 'badge', skin: '#ffe8dc' },
+  { id: 'dasol', name: '★ 김다솔 (특별단원)', defaultNick: '김다솔', hair: 'wavy_long', hairColor: '#7c4d28', outfit: '#d8f3dc', bottom: '#2d6a4f', acc: 'flower', skin: '#ffe8dc' },
+  { id: 'conductor', name: '🎼 지휘자님', defaultNick: '지휘자', hair: 'short_parted', hairColor: '#3a2618', outfit: '#f5efe6', bottom: '#2b2b2b', acc: 'baton', skin: '#ffe4d6' },
+];
+
+// 음악실 로비 내 가구 충돌 박스 및 Y-Sorting(깊이 정렬) 기준선 정의
+const LOBBY_OBSTACLES = [
+  // 상단 벽 및 창문/책장 영역
+  { id: 'top_wall', name: '상단 칠판 벽면', x: 0, y: 0, w: 1200, h: 255, sortY: 255 },
+  { id: 'left_bookshelf', name: '좌측 악보 책장', x: 0, y: 255, w: 115, h: 310, sortY: 540 },
+  { id: 'right_bookshelf', name: '우측 악기 수납장', x: 1085, y: 255, w: 115, h: 310, sortY: 540 },
+  // 중앙 그랜드 피아노 & 미니 이젤 칠판
+  { id: 'grand_piano', name: '중앙 그랜드 피아노', x: 515, y: 270, w: 225, h: 125, sortY: 380 },
+  { id: 'piano_bench', name: '피아노 의자', x: 490, y: 392, w: 72, h: 42, sortY: 425 },
+  { id: 'center_easel', name: '중앙 미니 칠판 이젤', x: 660, y: 385, w: 125, h: 75, sortY: 450 },
+  // 좌측 하단 라운지 테이블 구역
+  { id: 'lounge_table', name: '좌하단 티테이블 라운지', x: 45, y: 585, w: 295, h: 185, sortY: 720 },
+  // 우측 하단 공지사항 데스크 구역
+  { id: 'notice_desk', name: '우하단 공지사항 데스크', x: 880, y: 635, w: 300, h: 165, sortY: 750 },
+  // 우측 강아지 & 미니 테이블
+  { id: 'right_mini_table', name: '우측 미니 모니터 테이블', x: 1055, y: 495, w: 120, h: 95, sortY: 575 },
+];
+
+// 퀴즈방 출입문 포털 영역
+const PORTALS = {
+  music: { id: 'music', name: '🎵 음악 퀴즈방', sub: '헷갈리는 명곡 10선!', x: 120, y: 215, w: 175, h: 145, entryX: 205, entryY: 335, color: '#ff8da1' },
+  person: { id: 'person', name: '💡 합창단·트렌드 퀴즈방', sub: '누구/무엇일까요?', x: 905, y: 215, w: 175, h: 145, entryX: 990, entryY: 335, color: '#6ec6ff' },
+};
+
+// 확정된 음악 퀴즈 10문항 & 합창단/트렌드 맞춤형 퀴즈 데이터
+const INITIAL_QUIZZES = [
+  // [파트 1] 헷갈리는 레전드 음악 퀴즈 10선 (room: 'music')
+  {
+    id: 'm1',
+    room: 'music',
+    title: '음악 Q1. [레전드 댄스 매치] 지금 나오는 이 신나는 나이트풍 전주는 어느 곡일까요?',
+    desc: '신지의 시원한 고음과 김종민·빽가의 추임새! 인트로 비트만 듣고 A/B 구역으로 이동하세요!',
+    optionA: '코요태 - 순정',
+    optionB: '코요태 - 비몽',
+    answer: 'A',
+    melodyId: 'good_day',
+    duration: 15
+  },
+  {
+    id: 'm2',
+    room: 'music',
+    title: '음악 Q2. [여름 혼성그룹 매치] 쿨(COOL)의 경쾌한 이 전주! 정확한 곡 제목은?',
+    desc: '"와우~ 여름이다!" 대사 직후 나오는 통통 튀는 반주입니다. 과연 어느 곡일까요?',
+    optionA: '쿨(COOL) - 해변의 여인',
+    optionB: '쿨(COOL) - 애상',
+    answer: 'A',
+    melodyId: 'butterfly',
+    duration: 15
+  },
+  {
+    id: 'm3',
+    room: 'music',
+    title: '음악 Q3. [90년대 극악 난이도] 터보의 강렬한 유로 댄스 신스 전주! 이 곡은?',
+    desc: '전주 3초만 들으면 90년대 가요 고수들도 반반 갈리는 터보의 명곡 매치입니다!',
+    optionA: '터보 - Love Is... (3+3=0)',
+    optionB: '터보 - 나 어릴 적 꿈',
+    answer: 'A',
+    melodyId: 'christmas',
+    duration: 15
+  },
+  {
+    id: 'm4',
+    room: 'music',
+    title: '음악 Q4. [아이유 대작 매치] 화려한 오케스트라 스트링으로 시작하는 이 곡은?',
+    desc: '이민수 작곡가 + 김이나 작사가 콤비의 쌍둥이 명곡! 전주 현악기 선율을 잘 들어보세요.',
+    optionA: '아이유 - 좋은 날 (Good Day)',
+    optionB: '아이유 - 너랑 나 (You & I)',
+    answer: 'A',
+    melodyId: 'good_day',
+    duration: 15
+  },
+  {
+    id: 'm5',
+    room: 'music',
+    title: '음악 Q5. [노래방 록발라드 매치] 애절한 피아노와 스트링 인트로! 버즈의 어느 곡일까요?',
+    desc: '떼창은 완벽하게 할 줄 알지만 전주만 들으면 제목이 헷갈리는 버즈 양대 산맥!',
+    optionA: '버즈 - 가시',
+    optionB: '버즈 - 겁쟁이',
+    answer: 'A',
+    melodyId: 'butterfly',
+    duration: 15
+  },
+  {
+    id: 'm6',
+    room: 'music',
+    title: '음악 Q6. [동물 록밴드 매치] 체리필터의 강렬한 기타와 드럼 사운드! 이 노래는?',
+    desc: '제목에 둘 다 동물이 들어가서 급하게 뛰어가다 반대로 잘못 들어가는 단원 속출 주의!',
+    optionA: '체리필터 - 낭만고양이',
+    optionB: '체리필터 - 오리날다',
+    answer: 'A',
+    melodyId: 'christmas',
+    duration: 15
+  },
+  {
+    id: 'm7',
+    room: 'music',
+    title: '음악 Q7. [미디엄 템포 매치] 2000년대를 휩쓴 SG워너비의 따스하고 웅장한 전주!',
+    desc: '하모니카와 스트링 선율이 벅차오르는 이 인트로는 어느 곡일까요?',
+    optionA: 'SG워너비 - 라라라',
+    optionB: 'SG워너비 - 내 사람',
+    answer: 'B',
+    melodyId: 'butterfly',
+    duration: 15
+  },
+  {
+    id: 'm8',
+    room: 'music',
+    title: '음악 Q8. [폭주 기관차 발라드] 슬프게 시작하다 후렴에서 급발진하는 다비치의 곡은?',
+    desc: '곡 구조가 쌍둥이처럼 닮은 다비치의 히트곡! 지금 나오는 전주는 어느 쪽일까요?',
+    optionA: '다비치 - 8282',
+    optionB: '다비치 - 사랑과 전쟁',
+    answer: 'A',
+    melodyId: 'good_day',
+    duration: 15
+  },
+  {
+    id: 'm9',
+    room: 'music',
+    title: '음악 Q9. [대세 밴드 매치] 합창단과 페스티벌에서 가장 사랑받는 DAY6의 이 전주는?',
+    desc: '청량한 드럼과 건반 사운드로 시작하는 데이식스의 명곡을 맞혀보세요!',
+    optionA: '데이식스(DAY6) - 한 페이지가 될 수 있게',
+    optionB: '데이식스(DAY6) - 예뻤어',
+    answer: 'A',
+    melodyId: 'christmas',
+    duration: 15
+  },
+  {
+    id: 'm10',
+    room: 'music',
+    title: '음악 Q10. [결승 감성 매치] 이승철 보컬의 서정적인 인트로 선율! 정확한 곡명은?',
+    desc: '부활의 명곡과 이승철 솔로 명곡의 대결! 마지막까지 집중해서 이동하세요!',
+    optionA: '부활 - 네버엔딩 스토리',
+    optionB: '이승철 - 인연',
+    answer: 'A',
+    melodyId: 'butterfly',
+    duration: 15
+  },
+
+  // [파트 2] 합창단 상식 & 단원 저격 & 최신 트렌드 퀴즈 (room: 'person')
+  {
+    id: 'p1',
+    room: 'person',
+    title: '합창단 Q1. [음악 용어] 악보에서 "점점 여리게(작게)" 부르라는 뜻의 이탈리아어 용어는?',
+    desc: '크레센도(점점 크게)의 반대말입니다! 순간적으로 헷갈리지 말고 정답 구역으로 뛰어가세요!',
+    optionA: '디크레센도 (Decrescendo)',
+    optionB: '안단테 (Andante)',
+    answer: 'A',
+    duration: 15
+  },
+  {
+    id: 'p2',
+    room: 'person',
+    title: '합창단 Q2. [성악 상식] 여성 최고 음역대인 "소프라노(Soprano)"의 이탈리아어 어원 뜻은?',
+    desc: '합창단원이라면 솔깃할 성악 상식! 과연 소프라노의 원래 어원은 무엇일까요?',
+    optionA: '"가장 높은 / 위쪽의" 라는 뜻',
+    optionB: '"맑게 울리는 종소리" 라는 뜻',
+    answer: 'A',
+    duration: 15
+  },
+  {
+    id: 'p3',
+    room: 'person',
+    title: '합창단 Q3. [단원 스페셜] 우리 합창단 "김다솔" 단원의 이름에 담긴 진짜 뜻은 무엇일까요?',
+    desc: '🔥 힌트: 지금 경기장 안에서 움직이는 [김다솔] 단원을 찾아 쫄쫄 따라가 보세요! (낚시 주의!)',
+    optionA: '순우리말: 다보록하게 가지가 많이 퍼진 어린 소나무',
+    optionB: '한자 이름: 많을 다(多) + 거느릴 솔(率)',
+    answer: 'A',
+    duration: 18
+  },
+  {
+    id: 'p4',
+    room: 'person',
+    title: '합창단 Q4. [최신 트렌드 밈] 요즘 쇼츠를 휩쓴 뮤지컬 데스노트 "L을 보여줘?" 밈의 핵심은?',
+    desc: '"L을 보여줘? (L! L!)" 밈에서 나오는 결정적인 제스처와 대사 포인트를 골라주세요!',
+    optionA: '강렬한 눈빛과 손가락 L 포즈로 폭풍 샤우팅!',
+    optionB: '조용히 의자에 쭈그려 앉아 막대사탕 먹기',
+    answer: 'A',
+    duration: 15
+  },
+  {
+    id: 'p5',
+    room: 'person',
+    title: '합창단 Q5. [발성 밸런스] 합창할 때 바른 자세로 소리를 낼 때 배(복부)와 어깨의 상태는?',
+    desc: '매주 연습 시간마다 강조하는 발성의 기본! 올바른 호흡과 이완 방법을 선택하세요!',
+    optionA: '복부는 단단히 지지하되 어깨와 목은 완전히 힘을 뺀다',
+    optionB: '소리를 멀리 보내기 위해 어깨와 목까지 온몸에 힘을 꽉 준다',
+    answer: 'A',
+    duration: 15
+  }
+];
+
+// ==========================================
+// 2. WEB AUDIO SYNTHESIZER (효과음 및 음악 퀴즈 샘플 멜로디)
+// ==========================================
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+  }
+
+  init() {
+    if (!this.ctx && typeof window !== 'undefined') {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+
+  playTone(freq, duration = 0.15, type = 'sine', delay = 0, vol = 0.12) {
+    if (this.muted) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime + delay;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration);
+    } catch (e) {
+      // ignore audio context errors
+    }
+  }
+
+  playSelect() {
+    this.playTone(523.25, 0.1, 'triangle', 0, 0.1);
+    this.playTone(659.25, 0.12, 'triangle', 0.08, 0.1);
+  }
+
+  playTick(urgent = false) {
+    this.playTone(urgent ? 880 : 440, 0.06, 'sine', 0, urgent ? 0.15 : 0.08);
+  }
+
+  playTrapdoorDrop() {
+    if (this.muted) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      // 쿵! 바닥 열리는 소리 + 아래로 추락하는 슬라이드 사운드
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(420, now);
+      osc.frequency.exponentialRampToValueAtTime(65, now + 1.1);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 1.2);
+    } catch (e) {}
+  }
+
+  playFanfare() {
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((n, idx) => {
+      this.playTone(n, 0.25, 'triangle', idx * 0.12, 0.16);
+    });
+    this.playTone(1046.5, 0.6, 'sine', 0.48, 0.2);
+  }
+
+  playSampleMelody(melodyId) {
+    if (melodyId === 'good_day') {
+      const seq = [
+        [523.25, 0], [587.33, 0.2], [659.25, 0.4], [783.99, 0.6],
+        [880.0, 0.85], [783.99, 1.1], [659.25, 1.35], [1046.5, 1.6]
+      ];
+      seq.forEach(([f, d]) => this.playTone(f, 0.2, 'triangle', d, 0.15));
+    } else if (melodyId === 'butterfly') {
+      const seq = [
+        [392.0, 0], [440.0, 0.25], [493.88, 0.5], [587.33, 0.75],
+        [659.25, 1.05], [587.33, 1.35], [783.99, 1.65]
+      ];
+      seq.forEach(([f, d]) => this.playTone(f, 0.24, 'sine', d, 0.16));
+    } else {
+      const seq = [
+        [659.25, 0], [659.25, 0.22], [659.25, 0.45],
+        [659.25, 0.75], [659.25, 0.97], [659.25, 1.2],
+        [659.25, 1.5], [783.99, 1.7], [523.25, 1.9], [587.33, 2.1], [659.25, 2.3]
+      ];
+      seq.forEach(([f, d]) => this.playTone(f, 0.18, 'triangle', d, 0.15));
+    }
+  }
+}
+
+const soundFX = new SoundEngine();
+
+// ==========================================
+// 3. CANVAS DRAWING HELPERS (원본 음악실 완벽 복원 & 독립 아바타 렌더러)
+// ==========================================
+
+// 둥근 사각형 헬퍼
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// 3.1 배경 레이어 (고정 캐릭터/닉네임 완전 제거 & 원본 파스텔 원목 음악실 복원)
+function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
+  // 1) 전체 바닥 (따뜻한 파스텔 원목 마루)
+  const floorGrad = ctx.createLinearGradient(0, 220, 0, MAP_HEIGHT);
+  floorGrad.addColorStop(0, '#c98e54');
+  floorGrad.addColorStop(0.5, '#b87b43');
+  floorGrad.addColorStop(1, '#98602e');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, 220, MAP_WIDTH, MAP_HEIGHT - 220);
+
+  // 원목 마루 판자 결 & 따뜻한 조명 반사광
+  ctx.strokeStyle = 'rgba(92, 50, 20, 0.25)';
+  ctx.lineWidth = 1.5;
+  for (let y = 240; y < MAP_HEIGHT; y += 34) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(MAP_WIDTH, y);
+    ctx.stroke();
+    for (let x = (y % 68) * 2; x < MAP_WIDTH; x += 160) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 12, y + 34);
+      ctx.stroke();
+    }
+  }
+
+  // 중앙 바닥 은은한 스포트라이트 앰비언트 조명
+  const spotGrad = ctx.createRadialGradient(600, 460, 50, 600, 460, 480);
+  spotGrad.addColorStop(0, 'rgba(255, 232, 185, 0.38)');
+  spotGrad.addColorStop(1, 'rgba(255, 232, 185, 0)');
+  ctx.fillStyle = spotGrad;
+  ctx.fillRect(0, 220, MAP_WIDTH, MAP_HEIGHT - 220);
+
+  // 2) 상단 정면 벽 & 좌우 측면 벽
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, 250);
+  wallGrad.addColorStop(0, '#d8c3a8');
+  wallGrad.addColorStop(1, '#ebd9c0');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, MAP_WIDTH, 250);
+
+  // 벽면 웨인스코팅 몰딩 & 걸레받이
+  ctx.fillStyle = '#c49a6c';
+  ctx.fillRect(0, 236, MAP_WIDTH, 16);
+  ctx.strokeStyle = '#9e7348';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 236, MAP_WIDTH, 16);
+
+  // 3) 좌측 밤하늘 창문 & 커튼 (원본 좌상단 야경 창문 재현)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(130, 0);
+  ctx.lineTo(130, 235);
+  ctx.lineTo(0, 310);
+  ctx.closePath();
+  ctx.fillStyle = '#25335a';
+  ctx.fill();
+
+  // 밤하늘 별빛 & 빌딩 실루엣
+  ctx.fillStyle = '#18223d';
+  ctx.fillRect(8, 155, 28, 120);
+  ctx.fillRect(42, 135, 35, 130);
+  ctx.fillRect(82, 165, 30, 100);
+  ctx.fillStyle = '#ffd97d';
+  [[22, 45], [65, 35], [40, 88], [90, 70], [28, 118], [75, 110]].forEach(([sx, sy], i) => {
+    const twinkle = 1.5 + Math.sin(time * 3 + i) * 1;
+    ctx.beginPath();
+    ctx.arc(sx, sy, twinkle, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  // 창틀 격자
+  ctx.strokeStyle = '#6e4e32';
+  ctx.lineWidth = 5;
+  ctx.strokeRect(4, 4, 118, 230);
+  ctx.beginPath();
+  ctx.moveTo(62, 4);
+  ctx.lineTo(62, 234);
+  ctx.moveTo(4, 115);
+  ctx.lineTo(122, 115);
+  ctx.stroke();
+  // 따뜻한 베이지 커튼
+  ctx.fillStyle = '#d4b59e';
+  ctx.beginPath();
+  ctx.moveTo(112, 0);
+  ctx.quadraticCurveTo(95, 120, 125, 240);
+  ctx.lineTo(142, 240);
+  ctx.lineTo(142, 0);
+  ctx.fill();
+  ctx.restore();
+
+  // 4) 상단 중앙 대형 칠판 (Hanwoori Choir 20기 합창단)
+  const boardX = 335;
+  const boardY = 18;
+  const boardW = 530;
+  const boardH = 195;
+
+  // 칠판 나무 프레임
+  ctx.fillStyle = '#8c5832';
+  drawRoundedRect(ctx, boardX - 8, boardY - 8, boardW + 16, boardH + 16, 8);
+  ctx.fill();
+
+  // 칠판 초록색 보드면
+  const chalkGrad = ctx.createLinearGradient(boardX, boardY, boardX, boardY + boardH);
+  chalkGrad.addColorStop(0, '#1c3b2e');
+  chalkGrad.addColorStop(1, '#264d3d');
+  ctx.fillStyle = chalkGrad;
+  drawRoundedRect(ctx, boardX, boardY, boardW, boardH, 4);
+  ctx.fill();
+
+  // 칠판 상단 덩굴 식물 & 전구 가랜드
+  ctx.fillStyle = '#3c6e47';
+  for (let i = 0; i < 22; i++) {
+    const lx = boardX + 12 + i * 24;
+    const ly = boardY - 2 + Math.sin(i * 1.3) * 5;
+    ctx.beginPath();
+    ctx.arc(lx, ly, 9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // 따뜻한 전구 빛
+  for (let i = 0; i < 11; i++) {
+    const bx = boardX + 25 + i * 48;
+    const by = boardY + 6 + Math.sin(i) * 4;
+    const glow = ctx.createRadialGradient(bx, by, 1, bx, by, 14);
+    glow.addColorStop(0, 'rgba(255, 240, 180, 0.95)');
+    glow.addColorStop(1, 'rgba(255, 210, 100, 0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(bx, by, 14, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 칠판 텍스트 (원본 이미지 문구 100% 반영)
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255, 248, 231, 0.92)';
+  ctx.font = 'bold 31px "Georgia", "Noto Serif KR", serif';
+  ctx.fillText('Hanwoori Choir', boardX + boardW / 2, boardY + 68);
+
+  ctx.font = 'bold 28px "Noto Sans KR", sans-serif';
+  ctx.fillText('20기 합창단 ♪', boardX + boardW / 2, boardY + 110);
+
+  ctx.font = '16px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255, 240, 200, 0.88)';
+  ctx.fillText('✨ 함께 부르는, 더 특별한 우리 ✨', boardX + boardW / 2, boardY + 150);
+
+  // 칠판 우측 서브 문구
+  ctx.textAlign = 'left';
+  ctx.font = '13px "Noto Serif KR", serif';
+  ctx.fillStyle = 'rgba(235, 245, 235, 0.8)';
+  ctx.fillText('좋은 목소리는', boardX + boardW - 115, boardY + 86);
+  ctx.fillText('좋은 마음에서', boardX + boardW - 115, boardY + 106);
+  ctx.fillText('- Hanwoori -', boardX + boardW - 115, boardY + 126);
+
+  // 칠판 좌측 오선지 & 음표 그림
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+  ctx.lineWidth = 1.5;
+  for (let s = 0; s < 3; s++) {
+    ctx.beginPath();
+    ctx.moveTo(boardX + 24, boardY + 75 + s * 12);
+    ctx.quadraticCurveTo(boardX + 65, boardY + 65 + s * 12, boardX + 105, boardY + 85 + s * 12);
+    ctx.stroke();
+  }
+  ctx.font = '26px serif';
+  ctx.fillStyle = 'rgba(255,248,225,0.85)';
+  ctx.fillText('♫', boardX + 35, boardY + 88);
+  ctx.fillText('♪', boardX + 75, boardY + 115);
+  ctx.restore();
+
+  // 칠판 좌측 위 선반 & 검은 고양이 (원본 디테일)
+  ctx.fillStyle = '#8c5832';
+  ctx.fillRect(215, 78, 100, 10);
+  // 화분
+  ctx.fillStyle = '#c87d55';
+  ctx.fillRect(225, 55, 22, 23);
+  ctx.fillStyle = '#3f7a4d';
+  ctx.beginPath();
+  ctx.arc(236, 48, 18, 0, Math.PI * 2);
+  ctx.fill();
+  // 검은 고양이
+  ctx.fillStyle = '#232026';
+  ctx.beginPath();
+  ctx.arc(285, 62, 13, 0, Math.PI * 2); // 몸통
+  ctx.arc(285, 45, 9, 0, Math.PI * 2);  // 머리
+  ctx.fill();
+  // 고양이 노란 눈
+  ctx.fillStyle = '#ffd166';
+  ctx.fillRect(281, 43, 3, 3);
+  ctx.fillRect(287, 43, 3, 3);
+
+  // 5) 우측 상단 합창단 단체 액자 & 벽면 포스터
+  ctx.fillStyle = '#6b4226';
+  ctx.fillRect(915, 16, 155, 98);
+  ctx.fillStyle = '#2d3142';
+  ctx.fillRect(922, 23, 141, 84);
+  // 액자 속 미니 단원들 도트 표현
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 8; c++) {
+      ctx.fillStyle = '#ffdfcc';
+      ctx.beginPath();
+      ctx.arc(938 + c * 15, 45 + r * 18, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = r === 1 ? '#f4a7b9' : '#4a5878';
+      ctx.fillRect(934 + c * 15, 50 + r * 18, 8, 8);
+    }
+  }
+  // 우측 벽 "Music People Together Hanwoori" 보드
+  ctx.fillStyle = '#f2e8dc';
+  ctx.fillRect(1110, 48, 76, 135);
+  ctx.strokeStyle = '#b08968';
+  ctx.strokeRect(1110, 48, 76, 135);
+  ctx.fillStyle = '#6e5239';
+  ctx.font = '11px serif';
+  ctx.fillText('Music', 1122, 82);
+  ctx.fillText('People', 1122, 102);
+  ctx.fillText('Together', 1120, 122);
+  ctx.fillText('Hanwoori', 1118, 142);
+
+  // 6) 중앙 원형 베이지 러그 (그랜드 피아노 아래)
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(545, 415, 185, 85, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#ead7c3';
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#d4b89b';
+  ctx.stroke();
+  ctx.restore();
+
+  // 7) 좌측 하단 라운지 원형 러그 (높은음자리표 문양)
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(180, 685, 165, 92, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#e8d4be';
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#cba885';
+  ctx.stroke();
+  ctx.font = '42px serif';
+  ctx.fillStyle = 'rgba(166, 124, 82, 0.35)';
+  ctx.fillText('𝄞', 75, 710);
+  ctx.restore();
+
+  // 8) 하단 중앙 Welcome 매트 (Welcome! Hanwoori Choir 20기)
+  const matX = 415;
+  const matY = 640;
+  const matW = 370;
+  const matH = 115;
+  ctx.save();
+  ctx.fillStyle = '#c8a987';
+  drawRoundedRect(ctx, matX - 8, matY - 8, matW + 16, matH + 16, 8);
+  ctx.fill();
+  ctx.fillStyle = '#916e4b';
+  drawRoundedRect(ctx, matX, matY, matW, matH, 4);
+  ctx.fill();
+  ctx.strokeStyle = '#e6ccb2';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(matX + 8, matY + 8, matW - 16, matH - 16);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f7e6d0';
+  ctx.font = 'italic bold 32px "Georgia", serif';
+  ctx.fillText('Welcome!', matX + matW / 2, matY + 52);
+  ctx.font = 'bold 19px "Georgia", "Noto Sans KR", serif';
+  ctx.fillText('Hanwoori Choir 20기', matX + matW / 2, matY + 88);
+  ctx.font = '28px serif';
+  ctx.fillText('𝄞', matX + 42, matY + 68);
+  ctx.fillText('♬', matX + matW - 42, matY + 68);
+  ctx.restore();
+
+  // 9) 왼쪽 음악 퀴즈방 아치형 포털 (파스텔 핑크)
+  drawPortalArch(ctx, {
+    x: 118,
+    y: 145,
+    w: 180,
+    h: 205,
+    title: '🎵 음악 퀴즈방',
+    subtitle: '노래를 듣고 맞혀보세요!',
+    isPink: true,
+    isOpen: gameState.openRoom === 'music',
+    time
+  });
+
+  // 10) 오른쪽 인물 퀴즈방 아치형 포털 (파스텔 블루)
+  drawPortalArch(ctx, {
+    x: 902,
+    y: 145,
+    w: 180,
+    h: 205,
+    title: '👤 인물 퀴즈방',
+    subtitle: '누구일까요?',
+    isPink: false,
+    isOpen: gameState.openRoom === 'person',
+    time
+  });
+
+  // 11) 칠판 앞 첼로 & 보면대 장식
+  ctx.save();
+  ctx.fillStyle = '#8f4722';
+  ctx.beginPath();
+  ctx.ellipse(355, 235, 16, 26, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(352, 185, 6, 40);
+  // 보면대
+  ctx.strokeStyle = '#2d2d2d';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(405, 220);
+  ctx.lineTo(405, 268);
+  ctx.moveTo(392, 268);
+  ctx.lineTo(418, 268);
+  ctx.stroke();
+  ctx.fillStyle = '#2b2b2b';
+  ctx.fillRect(388, 200, 34, 22);
+  ctx.restore();
+
+  // 12) 우측 귀여운 하얀 강아지 (원본 이미지 오른쪽 포메라니안/말티즈 마스코트)
+  ctx.save();
+  const dogX = 1005;
+  const dogY = 515;
+  const dogBounce = Math.sin(time * 4) * 2;
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.beginPath();
+  ctx.ellipse(dogX, dogY + 18, 18, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(dogX, dogY + 6 + dogBounce, 14, 0, Math.PI * 2);
+  ctx.arc(dogX - 4, dogY - 8 + dogBounce, 13, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#d9cfc7';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // 강아지 눈/코
+  ctx.fillStyle = '#2b2b2b';
+  ctx.beginPath();
+  ctx.arc(dogX - 8, dogY - 10 + dogBounce, 2, 0, Math.PI * 2);
+  ctx.arc(dogX, dogY - 10 + dogBounce, 2, 0, Math.PI * 2);
+  ctx.arc(dogX - 4, dogY - 6 + dogBounce, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// 포털 아치 그리기 헬퍼
+function drawPortalArch(ctx, { x, y, w, h, title, subtitle, isPink, isOpen, time }) {
+  ctx.save();
+  const mainColor = isPink ? '#f7d1d8' : '#cce8fa';
+  const borderColor = isPink ? '#e598a8' : '#7ab8e6';
+  const glowColor = isPink ? 'rgba(255, 115, 155, 0.65)' : 'rgba(80, 185, 255, 0.65)';
+  const innerDark = isPink ? '#6b2d3e' : '#1e4263';
+
+  // 외벽 아치 프레임
+  ctx.fillStyle = mainColor;
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x, y + h);
+  ctx.lineTo(x, y + 75);
+  ctx.quadraticCurveTo(x, y, x + w / 2, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + 75);
+  ctx.lineTo(x + w, y + h);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 내부 통로 공간
+  const inX = x + 26;
+  const inY = y + 72;
+  const inW = w - 52;
+  const inH = h - 72;
+
+  const innerGrad = ctx.createLinearGradient(inX, inY, inX, inY + inH);
+  innerGrad.addColorStop(0, innerDark);
+  innerGrad.addColorStop(1, isPink ? '#ff9ebb' : '#85d1ff');
+  ctx.fillStyle = innerGrad;
+  ctx.beginPath();
+  ctx.moveTo(inX, inY + inH);
+  ctx.lineTo(inX, inY + 35);
+  ctx.quadraticCurveTo(inX, inY, inX + inW / 2, inY);
+  ctx.quadraticCurveTo(inX + inW, inY, inX + inW, inY + 35);
+  ctx.lineTo(inX + inW, inY + inH);
+  ctx.closePath();
+  ctx.fill();
+
+  // 개방 상태일 때 반짝이는 바닥 화살표 & 광원 효과
+  const pulse = 0.65 + Math.sin(time * 4) * 0.25;
+  ctx.save();
+  ctx.globalAlpha = isOpen ? pulse : 0.35;
+  ctx.fillStyle = isPink ? '#ff8da6' : '#75c9ff';
+  ctx.beginPath();
+  const arrowCx = x + w / 2;
+  const arrowCy = y + h + 18;
+  ctx.moveTo(arrowCx, arrowCy - 34);
+  ctx.lineTo(arrowCx + 34, arrowCy - 6);
+  ctx.lineTo(arrowCx + 16, arrowCy - 6);
+  ctx.lineTo(arrowCx + 22, arrowCy + 26);
+  ctx.lineTo(arrowCx - 22, arrowCy + 26);
+  ctx.lineTo(arrowCx - 16, arrowCy - 6);
+  ctx.lineTo(arrowCx - 34, arrowCy - 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // 상단 간판 텍스트
+  ctx.textAlign = 'center';
+  ctx.fillStyle = isPink ? '#6e2b3a' : '#1b3f60';
+  ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+  ctx.fillText(title, x + w / 2, y + 40);
+  ctx.font = '12px "Noto Sans KR", sans-serif';
+  ctx.fillText(subtitle, x + w / 2, y + 60);
+
+  // 개방/잠금 배지 표시
+  ctx.fillStyle = isOpen ? '#10b981' : 'rgba(30,41,59,0.75)';
+  drawRoundedRect(ctx, x + w / 2 - 46, y - 16, 92, 24, 12);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 11px "Noto Sans KR", sans-serif';
+  ctx.fillText(isOpen ? '🔓 입장 가능!' : '🔒 대기중', x + w / 2, y);
+
+  if (isOpen) {
+    ctx.strokeStyle = glowColor;
+    ctx.lineWidth = 6;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// 3.2 Y-Sorting 대상 가구 오브젝트 렌더러 (캐릭터가 가구 뒤로 가면 자연스럽게 가려짐)
+function getFurnitureDrawables(noticeText) {
+  return [
+    // 1) 중앙 그랜드 피아노 (sortY: 380)
+    {
+      id: 'furniture_piano',
+      sortY: 380,
+      draw: (ctx) => {
+        ctx.save();
+        // 피아노 그림자
+        ctx.fillStyle = 'rgba(0,0,0,0.28)';
+        ctx.beginPath();
+        ctx.ellipse(620, 395, 115, 38, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 피아노 다리 3개
+        ctx.fillStyle = '#141414';
+        ctx.fillRect(535, 355, 12, 48);
+        ctx.fillRect(705, 345, 12, 48);
+        ctx.fillRect(625, 365, 12, 48);
+
+        // 그랜드 피아노 바디
+        ctx.fillStyle = '#18181c';
+        ctx.strokeStyle = '#40404a';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(518, 320);
+        ctx.lineTo(665, 255);
+        ctx.quadraticCurveTo(735, 255, 735, 315);
+        ctx.lineTo(630, 370);
+        ctx.lineTo(518, 355);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 피아노 내부 황금색 프레임 & 현
+        ctx.fillStyle = '#c89b52';
+        ctx.beginPath();
+        ctx.moveTo(548, 315);
+        ctx.lineTo(665, 270);
+        ctx.lineTo(718, 308);
+        ctx.lineTo(620, 350);
+        ctx.closePath();
+        ctx.fill();
+
+        // 열린 피아노 뚜껑 (Open Lid)
+        ctx.fillStyle = 'rgba(20, 20, 26, 0.92)';
+        ctx.beginPath();
+        ctx.moveTo(535, 305);
+        ctx.lineTo(675, 225);
+        ctx.lineTo(728, 272);
+        ctx.lineTo(605, 325);
+        ctx.closePath();
+        ctx.fill();
+        // 지지대 막대
+        ctx.strokeStyle = '#d4af37';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(645, 325);
+        ctx.lineTo(665, 265);
+        ctx.stroke();
+
+        // 피아노 건반
+        ctx.fillStyle = '#faf8f5';
+        ctx.beginPath();
+        ctx.moveTo(512, 336);
+        ctx.lineTo(605, 362);
+        ctx.lineTo(615, 348);
+        ctx.lineTo(524, 324);
+        ctx.closePath();
+        ctx.fill();
+
+        // 피아노 위 악보
+        ctx.fillStyle = '#fffdf7';
+        ctx.fillRect(558, 286, 36, 26);
+        ctx.strokeStyle = '#999';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(558, 286, 36, 26);
+        ctx.restore();
+      }
+    },
+    // 2) 피아노 의자 (sortY: 425)
+    {
+      id: 'furniture_bench',
+      sortY: 425,
+      draw: (ctx) => {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillRect(488, 418, 76, 18);
+        ctx.fillStyle = '#222228';
+        drawRoundedRect(ctx, 490, 390, 72, 32, 5);
+        ctx.fill();
+        ctx.strokeStyle = '#454552';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+    },
+    // 3) 피아노 옆 미니 칠판 이젤 (sortY: 450)
+    {
+      id: 'furniture_easel',
+      sortY: 450,
+      draw: (ctx) => {
+        ctx.save();
+        const ex = 660;
+        const ey = 355;
+        // 이젤 다리
+        ctx.strokeStyle = '#7c4d28';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(ex + 20, ey + 70);
+        ctx.lineTo(ex + 10, ey + 108);
+        ctx.moveTo(ex + 105, ey + 70);
+        ctx.lineTo(ex + 115, ey + 108);
+        ctx.stroke();
+
+        // 보드 프레임
+        ctx.fillStyle = '#9c6334';
+        drawRoundedRect(ctx, ex, ey, 128, 82, 6);
+        ctx.fill();
+        ctx.fillStyle = '#273832';
+        drawRoundedRect(ctx, ex + 6, ey + 6, 116, 70, 4);
+        ctx.fill();
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f5ebd6';
+        ctx.font = '11px "Noto Sans KR", sans-serif';
+        ctx.fillText('♪ 오늘도 ♪', ex + 64, ey + 25);
+        ctx.fillText('좋은 음악, 좋은 사람들', ex + 64, ey + 44);
+        ctx.font = 'italic 11px Georgia, serif';
+        ctx.fillText('Hanwoori Choir', ex + 64, ey + 63);
+        ctx.restore();
+      }
+    },
+    // 4) 좌측 악보 책장 & 입간판 (sortY: 540)
+    {
+      id: 'furniture_left_shelf',
+      sortY: 540,
+      draw: (ctx) => {
+        ctx.save();
+        // 책장 본체
+        ctx.fillStyle = '#8b5732';
+        ctx.fillRect(0, 325, 92, 185);
+        ctx.fillStyle = '#5e381d';
+        ctx.fillRect(8, 340, 76, 48);
+        ctx.fillRect(8, 398, 76, 48);
+        ctx.fillRect(8, 456, 76, 42);
+        // 책 꽃이
+        const bookColors = ['#e07a5f', '#3d405b', '#81b29a', '#f2cc8f', '#d68c72'];
+        for (let i = 0; i < 6; i++) {
+          ctx.fillStyle = bookColors[i % bookColors.length];
+          ctx.fillRect(12 + i * 11, 350, 9, 36);
+          ctx.fillRect(14 + i * 11, 408, 9, 36);
+        }
+        // GOOD MUSIC GOOD PEOPLE 입간판
+        ctx.fillStyle = '#f3e5d3';
+        drawRoundedRect(ctx, 25, 495, 76, 108, 6);
+        ctx.fill();
+        ctx.strokeStyle = '#b58d67';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#6e4f35';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText('GOOD', 63, 522);
+        ctx.fillText('MUSIC', 63, 540);
+        ctx.fillText('GOOD', 63, 558);
+        ctx.fillText('PEOPLE', 63, 576);
+        ctx.fillText('♡', 63, 594);
+        ctx.restore();
+      }
+    },
+    // 5) 우측 수납장 & 미니 테이블 (sortY: 575)
+    {
+      id: 'furniture_right_shelf',
+      sortY: 575,
+      draw: (ctx) => {
+        ctx.save();
+        // 우측 수납장
+        ctx.fillStyle = '#8b5732';
+        ctx.fillRect(1105, 320, 95, 190);
+        ctx.fillStyle = '#5e381d';
+        ctx.fillRect(1114, 336, 76, 72);
+        ctx.fillRect(1114, 418, 76, 76);
+
+        // 우측 원형 미니 테이블 & 모니터
+        ctx.fillStyle = '#a86e3e';
+        ctx.beginPath();
+        ctx.ellipse(1115, 535, 52, 28, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#2b2d38';
+        ctx.fillRect(1095, 488, 42, 32);
+        ctx.restore();
+      }
+    },
+    // 6) 좌하단 원형 티테이블 라운지 (sortY: 720)
+    {
+      id: 'furniture_lounge',
+      sortY: 720,
+      draw: (ctx) => {
+        ctx.save();
+        // 원형 나무 난간
+        ctx.strokeStyle = '#7d4d27';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(178, 680, 145, Math.PI * 0.65, Math.PI * 1.85);
+        ctx.stroke();
+
+        // 원형 티테이블
+        ctx.fillStyle = 'rgba(0,0,0,0.22)';
+        ctx.beginPath();
+        ctx.ellipse(178, 668, 78, 44, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#b57844';
+        ctx.strokeStyle = '#7d4d27';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(178, 650, 76, 42, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 테이블 위 펼쳐진 악보 책 & 메트로놈 & 찻잔
+        ctx.fillStyle = '#fcf8f0';
+        ctx.fillRect(150, 636, 38, 24);
+        ctx.strokeStyle = '#999';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(150, 636, 38, 24);
+        // 메트로놈
+        ctx.fillStyle = '#6e3b1e';
+        ctx.beginPath();
+        ctx.moveTo(140, 615);
+        ctx.lineTo(152, 642);
+        ctx.lineTo(128, 642);
+        ctx.closePath();
+        ctx.fill();
+        // 핑크 & 화이트 스툴 쿠션 의자
+        ctx.fillStyle = '#d98a8a';
+        ctx.beginPath();
+        ctx.ellipse(135, 725, 26, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f0e6d8';
+        ctx.beginPath();
+        ctx.ellipse(215, 725, 26, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    },
+    // 7) 우하단 공지사항 데스크 & 보드 (sortY: 750)
+    {
+      id: 'furniture_notice_desk',
+      sortY: 750,
+      draw: (ctx) => {
+        ctx.save();
+        // 하단 우측 나무 데스크
+        ctx.fillStyle = '#8f5932';
+        ctx.beginPath();
+        ctx.moveTo(860, 710);
+        ctx.lineTo(1180, 650);
+        ctx.lineTo(1200, 795);
+        ctx.lineTo(860, 795);
+        ctx.closePath();
+        ctx.fill();
+
+        // 공지사항 보드 프레임
+        const bx = 1045;
+        const by = 560;
+        ctx.fillStyle = '#754624';
+        drawRoundedRect(ctx, bx, by, 140, 168, 8);
+        ctx.fill();
+        ctx.fillStyle = '#f5e8d7';
+        drawRoundedRect(ctx, bx + 8, by + 22, 124, 136, 4);
+        ctx.fill();
+
+        // 상단 '공지사항' 타이틀
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f7e6d0';
+        ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+        ctx.fillText('📌 공지사항', bx + 70, by + 16);
+
+        // 보드 속 손글씨 문구 (원본 '오늘도 함께라서 좋은 우리 ♡' 또는 사회자 공지)
+        ctx.fillStyle = '#4a3525';
+        ctx.font = 'bold 13px "Noto Sans KR", sans-serif';
+        const lines = (noticeText || '오늘도 함께라서 좋은 우리 ♡').split('\n');
+        lines.slice(0, 4).forEach((line, idx) => {
+          ctx.fillText(line.slice(0, 11), bx + 70, by + 56 + idx * 24);
+        });
+        ctx.fillStyle = '#e06666';
+        ctx.fillText('♡ Hanwoori 20기 ♡', bx + 70, by + 144);
+        ctx.restore();
+      }
+    }
+  ];
+}
+
+// 3.3 퀴즈방 (음악 퀴즈방 / 인물 퀴즈방) 전용 배경 및 함정 바닥(Trapdoor) 렌더러
+function drawQuizRoomBackground(ctx, time, gameState, currentQuiz) {
+  const isMusic = gameState.activeRoom === 'music';
+  // 배경 벽면
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, MAP_HEIGHT);
+  bgGrad.addColorStop(0, isMusic ? '#3b1d2e' : '#1b2d48');
+  bgGrad.addColorStop(1, '#12131a');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+
+  // 상단 스테이지 전광판 영역
+  ctx.fillStyle = '#1e2230';
+  drawRoundedRect(ctx, 80, 18, 1040, 195, 16);
+  ctx.fill();
+  ctx.strokeStyle = isMusic ? '#ff7eb3' : '#6ec6ff';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // 전광판 헤더
+  ctx.textAlign = 'center';
+  ctx.fillStyle = isMusic ? '#ff9ebb' : '#85d1ff';
+  ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+  ctx.fillText(
+    isMusic ? '🎵 한우리 20기 음악 퀴즈방 (A / B 서바이벌)' : '👤 한우리 20기 인물 퀴즈방 (A / B 서바이벌)',
+    MAP_WIDTH / 2,
+    52
+  );
+
+  // 현재 문제 텍스트 표시
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 25px "Noto Sans KR", sans-serif';
+  const qTitle = currentQuiz ? currentQuiz.title : '사회자가 곧 다음 퀴즈 문제를 출제합니다!';
+  ctx.fillText(qTitle, MAP_WIDTH / 2, 95);
+
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '16px "Noto Sans KR", sans-serif';
+  const qDesc = currentQuiz ? currentQuiz.desc : 'A 구역(왼쪽) 또는 B 구역(오른쪽)으로 캐릭터를 이동하여 정답을 선택하세요.';
+  ctx.fillText(qDesc, MAP_WIDTH / 2, 130);
+
+  // 보기 A vs 보기 B 안내 카드
+  if (currentQuiz) {
+    // A 보기 배지
+    ctx.fillStyle = 'rgba(244, 63, 94, 0.25)';
+    drawRoundedRect(ctx, 130, 148, 430, 48, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#fb7185';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#ffe4e6';
+    ctx.font = 'bold 18px "Noto Sans KR", sans-serif';
+    ctx.fillText(`🅰️ ${currentQuiz.optionA}`, 345, 178);
+
+    // B 보기 배지
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.25)';
+    drawRoundedRect(ctx, 640, 148, 430, 48, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#dbeafe';
+    ctx.font = 'bold 18px "Noto Sans KR", sans-serif';
+    ctx.fillText(`🅱️ ${currentQuiz.optionB}`, 855, 178);
+  }
+
+  // ==========================================
+  // 좌측 A 구역 바닥 & 우측 B 구역 바닥 (오답 시 바닥이 열리는 Trapdoor 연출!)
+  // ==========================================
+  const isRevealed = gameState.quizPhase === 'revealed' || gameState.quizPhase === 'eliminating';
+  const correctAns = currentQuiz?.answer || 'A';
+  const trapProgress = gameState.trapdoorOpen ? Math.min(1, gameState.trapdoorProgress || 1) : 0;
+
+  // 1) 심연(Abyss) 어두운 구덩이 먼저 그리기
+  ctx.fillStyle = '#07070c';
+  ctx.fillRect(60, 235, 1080, 520);
+  // 구덩이 내부 격자 깊이감
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let gx = 80; gx < 1140; gx += 45) {
+    ctx.beginPath();
+    ctx.moveTo(gx, 235);
+    ctx.lineTo(gx, 755);
+    ctx.stroke();
+  }
+
+  // 2) A 구역 바닥 플랫폼 (x: 60 ~ 580, y: 235 ~ 755)
+  const aIsWrong = isRevealed && correctAns !== 'A';
+  const aOpenRatio = aIsWrong ? trapProgress : 0;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(60, 235, 520, 520);
+  ctx.clip();
+
+  // 문이 양옆으로 갈라지며 열리는 효과
+  const halfW = 260 * (1 - aOpenRatio * 0.92);
+  ctx.fillStyle = isRevealed && correctAns === 'A' ? '#be123c' : '#881337';
+  ctx.fillRect(60, 235, halfW, 520);
+  ctx.fillRect(580 - halfW, 235, halfW, 520);
+
+  // A 구역 네온 테두리 & 대형 A 마크
+  ctx.strokeStyle = '#fb7185';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(64, 239, 512, 512);
+  if (aOpenRatio < 0.4) {
+    ctx.fillStyle = 'rgba(255, 228, 230, 0.22)';
+    ctx.font = 'bold 180px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('A', 320, 540);
+    ctx.font = 'bold 24px "Noto Sans KR", sans-serif';
+    ctx.fillStyle = '#fecdd3';
+    ctx.fillText(currentQuiz ? currentQuiz.optionA : 'A 구역', 320, 610);
+  }
+  ctx.restore();
+
+  // 3) B 구역 바닥 플랫폼 (x: 620 ~ 1140, y: 235 ~ 755)
+  const bIsWrong = isRevealed && correctAns !== 'B';
+  const bOpenRatio = bIsWrong ? trapProgress : 0;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(620, 235, 520, 520);
+  ctx.clip();
+
+  const bHalfW = 260 * (1 - bOpenRatio * 0.92);
+  ctx.fillStyle = isRevealed && correctAns === 'B' ? '#1d4ed8' : '#1e3a8a';
+  ctx.fillRect(620, 235, bHalfW, 520);
+  ctx.fillRect(1140 - bHalfW, 235, bHalfW, 520);
+
+  ctx.strokeStyle = '#60a5fa';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(624, 239, 512, 512);
+  if (bOpenRatio < 0.4) {
+    ctx.fillStyle = 'rgba(219, 234, 254, 0.22)';
+    ctx.font = 'bold 180px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('B', 880, 540);
+    ctx.font = 'bold 24px "Noto Sans KR", sans-serif';
+    ctx.fillStyle = '#bfdbfe';
+    ctx.fillText(currentQuiz ? currentQuiz.optionB : 'B 구역', 880, 610);
+  }
+  ctx.restore();
+
+  // 4) 중앙 중립 경계선 (미선택 시 탈락 구역)
+  if (!isRevealed) {
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(580, 235, 40, 520);
+    ctx.fillStyle = '#facc15';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('중립', 600, 480);
+    ctx.fillText('탈락', 600, 500);
+  }
+}
+
+// 3.4 귀여운 2D SD 아바타 독립 렌더러 (이동/대기/환호/추락 애니메이션 + 동적 닉네임)
+function drawChibiAvatar(ctx, player, isMe, time) {
+  const preset = AVATAR_PRESETS.find((p) => p.id === player.avatarId) || AVATAR_PRESETS[0];
+  const { x, y, dir = 'down', isMoving = false, status = 'alive', fallProgress = 0, emote = null } = player;
+
+  ctx.save();
+
+  // 탈락 추락 중일 때 회전 및 축소 연출
+  if (status === 'falling') {
+    const scale = Math.max(0.05, 1 - fallProgress * 0.95);
+    ctx.translate(x, y + fallProgress * 170);
+    ctx.rotate(fallProgress * Math.PI * 5);
+    ctx.scale(scale, scale);
+  } else {
+    ctx.translate(x, y);
+  }
+
+  // 관전자(탈락자) 반투명 처리
+  if (status === 'spectator') {
+    ctx.globalAlpha = 0.42;
+  }
+
+  // 걷기/대기/환호 애니메이션 오프셋 계산
+  const walkCycle = isMoving ? Math.sin(time * 14) : 0;
+  const idleCycle = Math.sin(time * 3.2 + (player.seed || 0)) * 1.8;
+  const cheerJump = status === 'cheering' || emote === '🙌' ? Math.abs(Math.sin(time * 10)) * -14 : 0;
+  const bodyY = (isMoving ? Math.abs(walkCycle) * -5 : idleCycle) + cheerJump;
+
+  // 1) 바닥 그림자 (추락 중에는 작아짐)
+  if (status !== 'falling') {
+    ctx.fillStyle = isMe ? 'rgba(250, 204, 21, 0.45)' : 'rgba(30, 15, 5, 0.32)';
+    ctx.beginPath();
+    ctx.ellipse(0, 2, isMe ? 22 : 17, isMe ? 9 : 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (isMe) {
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  // 2) 뒷머리 (롱헤어/트윈테일 등)
+  ctx.fillStyle = preset.hairColor;
+  if (['wavy_long', 'long_straight', 'half_tie'].includes(preset.hair)) {
+    ctx.beginPath();
+    ctx.ellipse(0, bodyY - 26, 20, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (preset.hair === 'twintail') {
+    ctx.beginPath();
+    ctx.ellipse(-20, bodyY - 28, 8, 15, 0.3, 0, Math.PI * 2);
+    ctx.ellipse(20, bodyY - 28, 8, 15, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 3) 귀여운 SD 다리 & 신발 애니메이션
+  const leftFootY = bodyY - 6 + walkCycle * 5;
+  const rightFootY = bodyY - 6 - walkCycle * 5;
+  ctx.fillStyle = '#2b211b';
+  ctx.beginPath();
+  ctx.ellipse(-6, leftFootY, 5.5, 4.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(6, rightFootY, 5.5, 4.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 4) SD 몸통 / 의상 (파스텔 코트, 원피스, 정장 등)
+  ctx.fillStyle = preset.outfit;
+  ctx.strokeStyle = '#3b281e';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-11, bodyY - 25);
+  ctx.lineTo(11, bodyY - 25);
+  ctx.quadraticCurveTo(15, bodyY - 9, 13, bodyY - 8);
+  ctx.lineTo(-13, bodyY - 8);
+  ctx.quadraticCurveTo(-15, bodyY - 9, -11, bodyY - 25);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 하의/치마 포인트
+  ctx.fillStyle = preset.bottom;
+  ctx.fillRect(-11, bodyY - 12, 22, 4);
+
+  // 넥타이/리본/지휘봉 액세서리
+  if (preset.acc === 'tie' || preset.acc === 'bowtie') {
+    ctx.fillStyle = '#e63946';
+    ctx.fillRect(-2, bodyY - 23, 4, 8);
+  } else if (preset.acc === 'ribbon' || preset.acc === 'bow') {
+    ctx.fillStyle = '#ff758f';
+    ctx.beginPath();
+    ctx.arc(0, bodyY - 22, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 5) 양팔 흔들기 (환호 시 만세)
+  const armSwing = isMoving ? walkCycle * 6 : 0;
+  ctx.fillStyle = preset.outfit;
+  ctx.strokeStyle = '#3b281e';
+  ctx.lineWidth = 1.8;
+  // 왼팔
+  ctx.beginPath();
+  if (status === 'cheering' || emote === '🙌') {
+    ctx.ellipse(-15, bodyY - 28, 4.5, 8, -0.5, 0, Math.PI * 2);
+  } else {
+    ctx.ellipse(-14, bodyY - 18 + armSwing, 4.5, 7, 0.2, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  ctx.stroke();
+  // 오른팔
+  ctx.beginPath();
+  if (status === 'cheering' || emote === '🙌') {
+    ctx.ellipse(15, bodyY - 28, 4.5, 8, 0.5, 0, Math.PI * 2);
+  } else {
+    ctx.ellipse(14, bodyY - 18 - armSwing, 4.5, 7, -0.2, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  ctx.stroke();
+
+  // 지휘자일 경우 오른손에 지휘봉 표시
+  if (preset.acc === 'baton') {
+    ctx.strokeStyle = '#f8fafc';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(16, bodyY - 20);
+    ctx.lineTo(26, bodyY - 32 + Math.sin(time * 8) * 4);
+    ctx.stroke();
+  }
+
+  // 6) 동글동글한 SD 얼굴
+  const headY = bodyY - 40;
+  const dirOffsetX = dir === 'left' ? -2.5 : dir === 'right' ? 2.5 : 0;
+
+  ctx.fillStyle = preset.skin;
+  ctx.strokeStyle = '#3b281e';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, headY, 17.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // 7) 눈, 볼터치, 표정 (방향이 위쪽 'up'이 아닐 때만 얼굴 이목구비 표시)
+  if (dir !== 'up') {
+    // 따뜻한 파스텔 핑크 볼터치
+    ctx.fillStyle = 'rgba(255, 130, 150, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(-9 + dirOffsetX, headY + 4, 4, 2.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(9 + dirOffsetX, headY + 4, 4, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 눈 깜빡임 또는 추락 시 >< 표정
+    const isBlinking = Math.sin(time * 2.5 + (player.seed || 1)) > 0.96;
+    ctx.fillStyle = '#261811';
+    ctx.strokeStyle = '#261811';
+    ctx.lineWidth = 2;
+
+    if (status === 'falling') {
+      // 추락 중 당황한 눈 (><)
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('> <', dirOffsetX, headY + 3);
+    } else if (isBlinking || status === 'cheering') {
+      // 웃는 눈 (^^)
+      ctx.beginPath();
+      ctx.arc(-6.5 + dirOffsetX, headY + 1, 3.5, Math.PI, 0);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(6.5 + dirOffsetX, headY + 1, 3.5, Math.PI, 0);
+      ctx.stroke();
+    } else {
+      // 초롱초롱한 큰 눈 + 하이라이트
+      ctx.beginPath();
+      ctx.ellipse(-6.5 + dirOffsetX, headY + 1, 3, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(6.5 + dirOffsetX, headY + 1, 3, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(-7.5 + dirOffsetX, headY - 1, 1.3, 0, Math.PI * 2);
+      ctx.arc(5.5 + dirOffsetX, headY - 1, 1.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 안경 착용 캐릭터 (민석 스타일)
+    if (preset.acc === 'glasses') {
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.4;
+      ctx.strokeRect(-11 + dirOffsetX, headY - 3, 8, 6);
+      ctx.strokeRect(3 + dirOffsetX, headY - 3, 8, 6);
+      ctx.beginPath();
+      ctx.moveTo(-3 + dirOffsetX, headY);
+      ctx.lineTo(3 + dirOffsetX, headY);
+      ctx.stroke();
+    }
+
+    // 귀여운 입
+    ctx.strokeStyle = '#7c4032';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(dirOffsetX, headY + 5.5, 2.2, 0, Math.PI);
+    ctx.stroke();
+  }
+
+  // 8) 앞머리 & 정수리 헤어스타일
+  ctx.fillStyle = preset.hairColor;
+  ctx.strokeStyle = '#3b281e';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  if (dir === 'up') {
+    // 뒷모습일 때는 머리 전체 덮기
+    ctx.arc(0, headY, 18.2, 0, Math.PI * 2);
+  } else {
+    // 앞머리 볼륨
+    ctx.arc(0, headY - 4, 18, Math.PI * 0.92, Math.PI * 2.08);
+    ctx.quadraticCurveTo(8, headY - 6, 0, headY - 3);
+    ctx.quadraticCurveTo(-8, headY - 6, -17, headY - 2);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 베레모 모자 (소영 스타일)
+  if (preset.acc === 'beret') {
+    ctx.fillStyle = '#e6ccb2';
+    ctx.strokeStyle = '#5c4028';
+    ctx.beginPath();
+    ctx.ellipse(2, headY - 16, 16, 7, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  // 9) 머리 위 이모티콘 버블 & 동적 참가자 닉네임 배지 (절대 배경에 고정되지 않은 실시간 레이어)
+  if (status !== 'falling') {
+    ctx.save();
+    const tagY = y + bodyY - 68;
+
+    // 감정표현 이모트 풍선
+    if (emote) {
+      ctx.font = '20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(emote, x, tagY - 18 + Math.sin(time * 8) * 3);
+    }
+
+    // 닉네임 캡슐 배지
+    ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+    const displayNick = status === 'spectator' ? `👻 ${player.nickname}` : player.nickname;
+    const textWidth = ctx.measureText(displayNick).width;
+    const pillW = Math.max(46, textWidth + 18);
+    const pillH = 22;
+
+    ctx.fillStyle = isMe ? 'rgba(20, 83, 45, 0.92)' : 'rgba(28, 25, 23, 0.78)';
+    drawRoundedRect(ctx, x - pillW / 2, tagY - pillH / 2, pillW, pillH, 11);
+    ctx.fill();
+
+    ctx.strokeStyle = isMe ? '#4ade80' : 'rgba(255, 255, 255, 0.35)';
+    ctx.lineWidth = isMe ? 2 : 1;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = isMe ? '#fef08a' : '#ffffff';
+    ctx.fillText(displayNick, x, tagY + 0.5);
+    ctx.restore();
+  }
+}
+
+// ==========================================
+// 4. MAIN APPLICATION COMPONENT
+// ==========================================
+export default function App() {
+  // 화면 모드: 'player' (참가자 /), 'admin' (사회자 /admin), 'screen' (행사장 스크린 /screen)
+  const [viewMode, setViewMode] = useState('player');
+  const [user, setUser] = useState(null);
+
+  // 참가자 본인 프로필 및 입장 상태
+  const [hasJoined, setHasJoined] = useState(false);
+  const [myNickname, setMyNickname] = useState('예진');
+  const [myAvatarId, setMyAvatarId] = useState('yejin');
+  const [myId] = useState(() => 'p_' + Math.random().toString(36).slice(2, 9));
+
+  // Phase 1 검증용 디버그 오버레이 토글 (충돌 영역 / Y-Sorting 기준선 / 원본 구성 체크리스트)
+  const [showCollisionDebug, setShowCollisionDebug] = useState(false);
+  const [showPhase1Modal, setShowPhase1Modal] = useState(false);
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
+  const [soundMuted, setSoundMuted] = useState(false);
+
+  // 퀴즈 문제 목록 상태 (관리자 추가/수정 가능)
+  const [quizzes, setQuizzes] = useState(INITIAL_QUIZZES);
+
+  // 통합 서버 게임 상태 (Socket.IO / Firestore / BroadcastChannel 동기화)
+  const [gameState, setGameState] = useState({
+    activeRoom: 'lobby',      // 'lobby' | 'music' | 'person'
+    openRoom: 'music',        // 로비에서 현재 열려있는 포털: 'none' | 'music' | 'person'
+    quizPhase: 'waiting',     // 'waiting' | 'question' | 'locked' | 'revealed' | 'winner'
+    currentQuizId: 'm1',
+    timer: 15,
+    maxTimer: 15,
+    autoMode: false,          // 사회자 자동 진행 여부
+    trapdoorOpen: false,
+    trapdoorProgress: 0,
+    noticeText: '오늘도\n함께라서\n좋은 우리 ♪',
+    scorePerCorrect: 10,
+    winnerBonus: 50,
+    lastWinnerName: '',
+  });
+
+  // 참가자 전체 목록 (요청하신 실제 단원 16명 + 김다솔 + 지휘자 초기 배치)
+  const [players, setPlayers] = useState(() => {
+    const initialSpots = [
+      { presetIdx: 17, x: 545, y: 315 }, // 지휘자
+      { presetIdx: 0, x: 310, y: 505 },  // 1. 예진
+      { presetIdx: 1, x: 535, y: 655 },  // 2. 주아
+      { presetIdx: 2, x: 405, y: 565 },  // 3. 병수
+      { presetIdx: 3, x: 795, y: 745 },  // 4. 원배 (LG)
+      { presetIdx: 4, x: 585, y: 560 },  // 5. 승환
+      { presetIdx: 5, x: 880, y: 645 },  // 6. 태율
+      { presetIdx: 6, x: 430, y: 685 },  // 7. 제환
+      { presetIdx: 7, x: 960, y: 525 },  // 8. 현주(ㄴ)
+      { presetIdx: 8, x: 175, y: 495 },  // 9. 경환
+      { presetIdx: 9, x: 350, y: 770 },  // 10. 지은
+      { presetIdx: 10, x: 775, y: 575 }, // 11. 인애
+      { presetIdx: 11, x: 995, y: 745 }, // 12. 유정
+      { presetIdx: 12, x: 465, y: 430 }, // 13. 유빈♥
+      { presetIdx: 13, x: 640, y: 495 }, // 14. 규민
+      { presetIdx: 14, x: 840, y: 445 }, // 15. 동원
+      { presetIdx: 15, x: 260, y: 600 }, // 16. 다석
+      { presetIdx: 16, x: 600, y: 610 }, // ★ 김다솔 (다솔이 문제 때 단원들이 쫓아다니는 주인공!)
+    ];
+    return initialSpots.map((spot, idx) => {
+      const p = AVATAR_PRESETS[spot.presetIdx];
+      return {
+        id: `bot_${p.id}`,
+        nickname: p.defaultNick,
+        avatarId: p.id,
+        isBot: true,
+        room: 'lobby',
+        x: spot.x,
+        y: spot.y,
+        targetX: null,
+        targetY: null,
+        dir: 'down',
+        isMoving: false,
+        status: 'alive', // 'alive' | 'falling' | 'spectator' | 'cheering'
+        fallProgress: 0,
+        selectedChoice: null, // 'A' | 'B' | null
+        score: (idx % 4) * 10,
+        correctCount: idx % 4,
+        wins: idx === 1 ? 1 : 0,
+        gamesPlayed: 1,
+        emote: p.id === 'dasol' ? '🌲' : null,
+        seed: idx * 1.7
+      };
+    });
+  });
+
+  const [botsEnabled, setBotsEnabled] = useState(true);
+  const [adminUnlocked, setAdminUnlocked] = useState(true);
+  const [adminPinInput, setAdminPinInput] = useState('');
+  const [newQuizForm, setNewQuizForm] = useState({
+    room: 'music',
+    title: '',
+    desc: '',
+    optionA: '',
+    optionB: '',
+    answer: 'A',
+    duration: 15
+  });
+
+  // 키보드 및 모바일 조이스틱 입력 Ref
+  const keysPressedRef = useRef({});
+  const joystickVectorRef = useRef({ dx: 0, dy: 0, active: false });
+  const canvasRef = useRef(null);
+  const animTimeRef = useRef(0);
+  const broadcastRef = useRef(null);
+
+  // 현재 선택된 문제 객체
+  const currentQuiz = useMemo(
+    () => quizzes.find((q) => q.id === gameState.currentQuizId) || quizzes[0],
+    [quizzes, gameState.currentQuizId]
+  );
+
+  // 내 캐릭터 객체
+  const myPlayer = useMemo(
+    () => players.find((p) => p.id === myId) || null,
+    [players, myId]
+  );
+
+  // ==========================================
+  // 5. FIREBASE & MULTI-TAB REALTIME SYNC
+  // ==========================================
+  useEffect(() => {
+    if (!auth) return;
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (e) {
+        console.warn('Auth warning:', e);
+      }
+    };
+    initAuth();
+    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
+    return () => unsub();
+  }, []);
+
+  // 브라우저 탭 간 실시간 동기화 (BroadcastChannel) + Firestore 연동
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      const bc = new BroadcastChannel('hanwoori_choir_party_channel');
+      bc.onmessage = (ev) => {
+        const { type, payload } = ev.data || {};
+        if (type === 'SYNC_GAME_STATE') {
+          setGameState((prev) => ({ ...prev, ...payload }));
+        } else if (type === 'SYNC_PLAYER_MOVE') {
+          setPlayers((prev) => {
+            const exists = prev.some((p) => p.id === payload.id);
+            if (!exists) return [...prev, payload];
+            return prev.map((p) => (p.id === payload.id ? { ...p, ...payload } : p));
+          });
+        } else if (type === 'SYNC_ALL_PLAYERS') {
+          setPlayers(payload);
+        }
+      };
+      broadcastRef.current = bc;
+      return () => bc.close();
+    }
+  }, []);
+
+  const broadcastState = useCallback((newState) => {
+    setGameState((prev) => {
+      const updated = typeof newState === 'function' ? newState(prev) : { ...prev, ...newState };
+      if (broadcastRef.current) {
+        broadcastRef.current.postMessage({ type: 'SYNC_GAME_STATE', payload: updated });
+      }
+      if (db && user) {
+        const stateRef = doc(db, 'artifacts', appId, 'public', 'data', 'gameState', 'main');
+        setDoc(stateRef, updated, { merge: true }).catch(() => {});
+      }
+      return updated;
+    });
+  }, [user]);
+
+  useEffect(() => {
+    if (!db || !user) return;
+    const stateRef = doc(db, 'artifacts', appId, 'public', 'data', 'gameState', 'main');
+    const unsub = onSnapshot(
+      stateRef,
+      (snap) => {
+        if (snap.exists()) {
+          setGameState((prev) => ({ ...prev, ...snap.data() }));
+        }
+      },
+      (err) => console.warn('Firestore snapshot warning:', err)
+    );
+    return () => unsub();
+  }, [user]);
+
+  // ==========================================
+  // 6. COLLISION DETECTION & MOVEMENT ENGINE
+  // ==========================================
+  const isPositionBlocked = useCallback((nx, ny, room) => {
+    // 화면 경계 체크
+    if (nx < 55 || nx > MAP_WIDTH - 55 || ny < 245 || ny > MAP_HEIGHT - 30) {
+      return true;
+    }
+    if (room === 'lobby') {
+      for (const obs of LOBBY_OBSTACLES) {
+        if (nx >= obs.x && nx <= obs.x + obs.w && ny >= obs.y && ny <= obs.y + obs.h) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }, []);
+
+  // 참가자 최초 로비 입장 또는 프로필 변경
+  const handleEnterMusicRoom = (e) => {
+    if (e) e.preventDefault();
+    const cleanNick = myNickname.trim() || '한우리단원';
+    soundFX.playSelect();
+
+    setPlayers((prev) => {
+      const existing = prev.find((p) => p.id === myId);
+      const myData = existing
+        ? { ...existing, nickname: cleanNick, avatarId: myAvatarId }
+        : {
+            id: myId,
+            nickname: cleanNick,
+            avatarId: myAvatarId,
+            isBot: false,
+            room: gameState.activeRoom,
+            x: 600,
+            y: 665,
+            targetX: null,
+            targetY: null,
+            dir: 'up',
+            isMoving: false,
+            status: 'alive',
+            fallProgress: 0,
+            selectedChoice: null,
+            score: 0,
+            correctCount: 0,
+            wins: 0,
+            gamesPlayed: 1,
+            emote: '🎵',
+            seed: Math.random() * 10
+          };
+      const nextList = existing
+        ? prev.map((p) => (p.id === myId ? myData : p))
+        : [...prev, myData];
+
+      if (broadcastRef.current) {
+        broadcastRef.current.postMessage({ type: 'SYNC_PLAYER_MOVE', payload: myData });
+      }
+      return nextList;
+    });
+    setHasJoined(true);
+  };
+
+  // 기본 입장 자동 처리 (즉시 테스트 편의)
+  useEffect(() => {
+    if (!hasJoined) {
+      handleEnterMusicRoom();
+    }
+  }, []);
+
+  // 키보드 WASD / 방향키 이벤트 리스너
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+      const k = e.key.toLowerCase();
+      if (['arrowup', 'w', 'arrowdown', 's', 'arrowleft', 'a', 'arrowright', 'd'].includes(k)) {
+        keysPressedRef.current[k] = true;
+      }
+    };
+    const handleKeyUp = (e) => {
+      const k = e.key.toLowerCase();
+      keysPressedRef.current[k] = false;
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  // 퀴즈방 A / B 버튼 터치 시 해당 구역으로 자동 이동 (방식 B)
+  // 수동 조작(조이스틱/키보드) 입력 시 즉시 자동 이동 취소되고 수동 조작으로 전환됨!
+  const handleSelectZoneAutoWalk = (zone) => {
+    if (!myPlayer || myPlayer.status !== 'alive') return;
+    if (gameState.quizPhase === 'locked' || gameState.quizPhase === 'revealed') return;
+
+    soundFX.playSelect();
+    const targetX = zone === 'A' ? 280 + (Math.random() * 120 - 60) : 900 + (Math.random() * 120 - 60);
+    const targetY = 470 + (Math.random() * 140 - 70);
+
+    setPlayers((prev) =>
+      prev.map((p) =>
+        p.id === myId
+          ? { ...p, targetX, targetY, selectedChoice: zone }
+          : p
+      )
+    );
+  };
+
+  // 로비에서 개방된 퀴즈방 출입문으로 자동 이동 및 입장
+  const handleWalkToPortal = (portalKey) => {
+    const portal = PORTALS[portalKey];
+    if (!portal) return;
+    soundFX.playSelect();
+    setPlayers((prev) =>
+      prev.map((p) =>
+        p.id === myId
+          ? { ...p, targetX: portal.entryX, targetY: portal.entryY }
+          : p
+      )
+    );
+  };
+
+  // 감정표현 이모티콘 발송
+  const triggerEmote = (emoji) => {
+    soundFX.playSelect();
+    setPlayers((prev) =>
+      prev.map((p) => (p.id === myId ? { ...p, emote: emoji } : p))
+    );
+    setTimeout(() => {
+      setPlayers((prev) =>
+        prev.map((p) => (p.id === myId && p.emote === emoji ? { ...p, emote: null } : p))
+      );
+    }, 2500);
+  };
+
+  // ==========================================
+  // 7. QUIZ TIMER & SERVER AUTHORITATIVE JUDGE
+  // ==========================================
+  // 정답 공개 및 오답 구역 바닥 개방 (서버 판정)
+  const executeRevealAndEliminate = useCallback(() => {
+    const ans = currentQuiz?.answer || 'A';
+    soundFX.playTrapdoorDrop();
+
+    broadcastState((prev) => ({
+      ...prev,
+      quizPhase: 'revealed',
+      trapdoorOpen: true,
+      trapdoorProgress: 1
+    }));
+
+    setPlayers((prevPlayers) => {
+      // 현재 퀴즈방에 살아있는 참가자들 확인
+      const aliveInRoom = prevPlayers.filter((p) => p.status === 'alive');
+      // 서버가 각 캐릭터의 최종 구역(A: x < 580, B: x > 620)을 기준으로 엄격 판정
+      const survivors = aliveInRoom.filter((p) => {
+        const zone = p.x < 580 ? 'A' : p.x > 620 ? 'B' : 'NONE';
+        return zone === ans;
+      });
+
+      return prevPlayers.map((p) => {
+        if (p.status !== 'alive') return p;
+        const finalZone = p.x < 580 ? 'A' : p.x > 620 ? 'B' : 'NONE';
+        const isCorrect = finalZone === ans;
+
+        if (isCorrect) {
+          return {
+            ...p,
+            status: 'cheering',
+            selectedChoice: finalZone,
+            score: p.score + (gameState.scorePerCorrect || 10),
+            correctCount: p.correctCount + 1,
+            emote: '🎉'
+          };
+        } else {
+          return {
+            ...p,
+            status: 'falling',
+            selectedChoice: finalZone,
+            fallProgress: 0.02,
+            emote: '😱'
+          };
+        }
+      });
+    });
+
+    // 2.6초 후 추락한 오답자들을 관전자 모드로 전환하고 생존자 수 체크
+    setTimeout(() => {
+      setPlayers((prevPlayers) => {
+        const updated = prevPlayers.map((p) => {
+          if (p.status === 'falling') {
+            return { ...p, status: 'spectator', fallProgress: 1, isMoving: false, targetX: null, targetY: null };
+          }
+          if (p.status === 'cheering') {
+            return { ...p, status: 'alive', emote: null };
+          }
+          return p;
+        });
+
+        const remainingAlive = updated.filter((p) => p.status === 'alive');
+        if (remainingAlive.length === 1) {
+          // 최후의 생존자 1명 결정 -> 즉시 우승 처리!
+          const winner = remainingAlive[0];
+          soundFX.playFanfare();
+          broadcastState((st) => ({
+            ...st,
+            quizPhase: 'winner',
+            lastWinnerName: winner.nickname
+          }));
+          return updated.map((p) =>
+            p.id === winner.id
+              ? { ...p, score: p.score + (gameState.winnerBonus || 50), wins: p.wins + 1, emote: '👑' }
+              : p
+          );
+        }
+        return updated;
+      });
+    }, 2600);
+  }, [currentQuiz, broadcastState, gameState.scorePerCorrect, gameState.winnerBonus]);
+
+  // 1초 타이머 루프
+  useEffect(() => {
+    if (gameState.quizPhase !== 'question') return;
+
+    const interval = setInterval(() => {
+      setGameState((prev) => {
+        if (prev.quizPhase !== 'question') return prev;
+        if (prev.timer > 1) {
+          soundFX.playTick(prev.timer <= 4);
+          return { ...prev, timer: prev.timer - 1 };
+        } else {
+          // 제한시간 종료 -> 이동 및 선택 잠금 (locked)
+          soundFX.playTick(true);
+          if (prev.autoMode) {
+            setTimeout(() => executeRevealAndEliminate(), 1800);
+          }
+          return { ...prev, timer: 0, quizPhase: 'locked' };
+        }
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [gameState.quizPhase, executeRevealAndEliminate]);
+
+  // ==========================================
+  // 8. 60FPS GAME ANIMATION & BOT AI LOOP
+  // ==========================================
+  useEffect(() => {
+    let animationFrameId;
+    let lastTimestamp = performance.now();
+
+    const updateAndRender = (now) => {
+      const dt = Math.min(0.05, (now - lastTimestamp) / 1000);
+      lastTimestamp = now;
+      animTimeRef.current += dt;
+      const time = animTimeRef.current;
+
+      // 키보드/조이스틱 입력 벡터 계산
+      const keys = keysPressedRef.current;
+      let manualDx = 0;
+      let manualDy = 0;
+      if (keys['arrowleft'] || keys['a']) manualDx -= 1;
+      if (keys['arrowright'] || keys['d']) manualDx += 1;
+      if (keys['arrowup'] || keys['w']) manualDy -= 1;
+      if (keys['arrowdown'] || keys['s']) manualDy += 1;
+
+      if (joystickVectorRef.current.active) {
+        manualDx = joystickVectorRef.current.dx;
+        manualDy = joystickVectorRef.current.dy;
+      }
+
+      const hasManualInput = Math.abs(manualDx) > 0.05 || Math.abs(manualDy) > 0.05;
+      const isMovementLocked =
+        gameState.activeRoom !== 'lobby' &&
+        (gameState.quizPhase === 'locked' || gameState.quizPhase === 'revealed');
+
+      // 플레이어 및 AI 합창단원 위치 업데이트
+      setPlayers((prevPlayers) => {
+        let stateChanged = false;
+        const nextPlayers = prevPlayers.map((p) => {
+          // 추락 애니메이션 진행
+          if (p.status === 'falling') {
+            stateChanged = true;
+            return { ...p, fallProgress: Math.min(1, (p.fallProgress || 0) + dt * 0.75) };
+          }
+
+          // 관전자이거나 선택 잠금 시간이면 이동 불가
+          if (p.status === 'spectator' || isMovementLocked) {
+            if (p.isMoving) {
+              stateChanged = true;
+              return { ...p, isMoving: false };
+            }
+            return p;
+          }
+
+          let vx = 0;
+          let vy = 0;
+          let nextTargetX = p.targetX;
+          let nextTargetY = p.targetY;
+
+          // 1) 내 캐릭터 조작 처리
+          if (p.id === myId) {
+            if (hasManualInput) {
+              // 수동 조작 시 자동 이동(targetX/Y) 즉시 취소
+              nextTargetX = null;
+              nextTargetY = null;
+              const len = Math.hypot(manualDx, manualDy) || 1;
+              vx = (manualDx / len) * 210;
+              vy = (manualDy / len) * 210;
+            } else if (nextTargetX !== null && nextTargetY !== null) {
+              const dist = Math.hypot(nextTargetX - p.x, nextTargetY - p.y);
+              if (dist < 8) {
+                nextTargetX = null;
+                nextTargetY = null;
+              } else {
+                vx = ((nextTargetX - p.x) / dist) * 220;
+                vy = ((nextTargetY - p.y) / dist) * 220;
+              }
+            }
+          }
+          // 2) AI 합창단원 봇 자율 행동
+          else if (p.isBot && botsEnabled) {
+            if (nextTargetX !== null && nextTargetY !== null) {
+              const dist = Math.hypot(nextTargetX - p.x, nextTargetY - p.y);
+              if (dist < 10) {
+                nextTargetX = null;
+                nextTargetY = null;
+              } else {
+                vx = ((nextTargetX - p.x) / dist) * 145;
+                vy = ((nextTargetY - p.y) / dist) * 145;
+              }
+            } else if (Math.random() < 0.015) {
+              if (gameState.activeRoom === 'lobby') {
+                // 로비 산책
+                const rx = 180 + Math.random() * 840;
+                const ry = 360 + Math.random() * 380;
+                if (!isPositionBlocked(rx, ry, 'lobby')) {
+                  nextTargetX = rx;
+                  nextTargetY = ry;
+                }
+              } else if (gameState.quizPhase === 'question') {
+                // 퀴즈 문제 출제 중이면 A 또는 B 구역으로 이동
+                const pickA = Math.random() < 0.55;
+                nextTargetX = pickA ? 140 + Math.random() * 360 : 680 + Math.random() * 360;
+                nextTargetY = 300 + Math.random() * 380;
+              }
+            }
+          }
+
+          if (vx === 0 && vy === 0) {
+            if (p.isMoving || p.targetX !== nextTargetX) {
+              stateChanged = true;
+              return { ...p, isMoving: false, targetX: nextTargetX, targetY: nextTargetY };
+            }
+            return p;
+          }
+
+          stateChanged = true;
+          let nx = p.x + vx * dt;
+          let ny = p.y + vy * dt;
+
+          // 충돌 체크 (X축, Y축 슬라이딩 처리)
+          if (isPositionBlocked(nx, ny, gameState.activeRoom)) {
+            if (!isPositionBlocked(nx, p.y, gameState.activeRoom)) {
+              ny = p.y;
+            } else if (!isPositionBlocked(p.x, ny, gameState.activeRoom)) {
+              nx = p.x;
+            } else {
+              nx = p.x;
+              ny = p.y;
+              nextTargetX = null;
+              nextTargetY = null;
+            }
+          }
+
+          // 바라보는 방향 계산
+          let dir = p.dir;
+          if (Math.abs(vx) > Math.abs(vy)) {
+            dir = vx > 0 ? 'right' : 'left';
+          } else if (Math.abs(vy) > 0) {
+            dir = vy > 0 ? 'down' : 'up';
+          }
+
+          // 로비에서 열린 퀴즈방 출입문 포털에 도달했는지 체크
+          if (
+            p.id === myId &&
+            gameState.activeRoom === 'lobby' &&
+            gameState.openRoom !== 'none'
+          ) {
+            const openPortal = PORTALS[gameState.openRoom];
+            if (
+              openPortal &&
+              Math.hypot(nx - openPortal.entryX, ny - openPortal.entryY) < 42
+            ) {
+              // 포털 입장 트리거!
+              setTimeout(() => handleEnterQuizRoom(gameState.openRoom), 50);
+            }
+          }
+
+          const selectedChoice =
+            gameState.activeRoom !== 'lobby'
+              ? nx < 580
+                ? 'A'
+                : nx > 620
+                ? 'B'
+                : null
+              : null;
+
+          return {
+            ...p,
+            x: nx,
+            y: ny,
+            dir,
+            isMoving: true,
+            targetX: nextTargetX,
+            targetY: nextTargetY,
+            selectedChoice
+          };
+        });
+
+        return stateChanged ? nextPlayers : prevPlayers;
+      });
+
+      // ==========================================
+      // CANVAS RENDERING PIPELINE (Y-Sorting 적용)
+      // ==========================================
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+
+        if (gameState.activeRoom === 'lobby') {
+          // 1) 음악실 바닥 & 벽면 & 포털 렌더링
+          drawMusicRoomBackground(ctx, time, gameState);
+
+          // 2) Y-Sorting: 가구 오브젝트들과 참가자 아바타들을 Y좌표 기준으로 정렬하여 렌더링
+          const furnitureList = getFurnitureDrawables(gameState.noticeText);
+          const renderables = [
+            ...furnitureList.map((f) => ({ type: 'furniture', sortY: f.sortY, draw: f.draw })),
+            ...players.map((p) => ({
+              type: 'avatar',
+              sortY: p.y,
+              draw: (c) => drawChibiAvatar(c, p, p.id === myId, time)
+            }))
+          ];
+
+          renderables.sort((a, b) => a.sortY - b.sortY);
+          renderables.forEach((item) => item.draw(ctx));
+
+          // 3) Phase 1 검증용 디버그 오버레이 (충돌 히트박스 & Y-Sorting 기준선 표시)
+          if (showCollisionDebug) {
+            ctx.save();
+            LOBBY_OBSTACLES.forEach((obs) => {
+              ctx.fillStyle = 'rgba(239, 68, 68, 0.28)';
+              ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+              ctx.strokeStyle = '#ef4444';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
+              ctx.fillStyle = '#ffffff';
+              ctx.font = 'bold 11px sans-serif';
+              ctx.fillText(`충돌:${obs.name} (sortY:${obs.sortY})`, obs.x + 6, obs.y + 16);
+            });
+            Object.values(PORTALS).forEach((pt) => {
+              ctx.strokeStyle = '#10b981';
+              ctx.lineWidth = 3;
+              ctx.setLineDash([6, 4]);
+              ctx.strokeRect(pt.x, pt.y, pt.w, pt.h);
+              ctx.setLineDash([]);
+            });
+            ctx.restore();
+          }
+        } else {
+          // 퀴즈방 (음악 퀴즈방 / 인물 퀴즈방) 렌더링
+          drawQuizRoomBackground(ctx, time, gameState, currentQuiz);
+
+          const sortedPlayers = [...players].sort((a, b) => a.y - b.y);
+          sortedPlayers.forEach((p) => drawChibiAvatar(ctx, p, p.id === myId, time));
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(updateAndRender);
+    };
+
+    animationFrameId = requestAnimationFrame(updateAndRender);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [
+    players,
+    gameState,
+    currentQuiz,
+    myId,
+    botsEnabled,
+    showCollisionDebug,
+    isPositionBlocked
+  ]);
+
+  // ==========================================
+  // 9. HOST / ADMIN CONTROL FUNCTIONS
+  // ==========================================
+  // 특정 퀴즈방으로 전원 입장 또는 개방
+  const handleEnterQuizRoom = (roomKey) => {
+    soundFX.playSelect();
+    const firstRoomQuiz = quizzes.find((q) => q.room === roomKey) || quizzes[0];
+    broadcastState({
+      activeRoom: roomKey,
+      openRoom: roomKey,
+      quizPhase: 'waiting',
+      currentQuizId: firstRoomQuiz.id,
+      timer: firstRoomQuiz.duration || 15,
+      maxTimer: firstRoomQuiz.duration || 15,
+      trapdoorOpen: false,
+      trapdoorProgress: 0
+    });
+
+    // 참가자들을 퀴즈방 중앙 대기 위치로 배치
+    setPlayers((prev) =>
+      prev.map((p, i) => ({
+        ...p,
+        room: roomKey,
+        status: 'alive',
+        fallProgress: 0,
+        selectedChoice: null,
+        targetX: null,
+        targetY: null,
+        x: 340 + (i % 6) * 100 + (Math.random() * 20 - 10),
+        y: 380 + Math.floor(i / 6) * 95
+      }))
+    );
+  };
+
+  // 문제 시작 & 카운트다운 시작
+  const handleStartQuestion = (quizId = gameState.currentQuizId) => {
+    const targetQuiz = quizzes.find((q) => q.id === quizId) || currentQuiz;
+    soundFX.playSelect();
+    if (targetQuiz.room === 'music' && targetQuiz.melodyId) {
+      soundFX.playSampleMelody(targetQuiz.melodyId);
+    }
+
+    broadcastState({
+      currentQuizId: targetQuiz.id,
+      quizPhase: 'question',
+      timer: targetQuiz.duration || 15,
+      maxTimer: targetQuiz.duration || 15,
+      trapdoorOpen: false,
+      trapdoorProgress: 0
+    });
+
+    // AI 봇들이 문제 시작과 함께 A 또는 B 구역으로 이동하도록 타겟 부여
+    setPlayers((prev) =>
+      prev.map((p) => {
+        if (p.status !== 'alive') return p;
+        if (!p.isBot) return { ...p, targetX: null, targetY: null };
+        const pickA = Math.random() < 0.55;
+        return {
+          ...p,
+          targetX: pickA ? 130 + Math.random() * 380 : 670 + Math.random() * 380,
+          targetY: 310 + Math.random() * 380
+        };
+      })
+    );
+  };
+
+  // 전원 탈락 시 직전 생존자 부활 (예외 규칙 대응)
+  const handleReviveAllInRoom = () => {
+    soundFX.playFanfare();
+    setPlayers((prev) =>
+      prev.map((p) => ({
+        ...p,
+        status: 'alive',
+        fallProgress: 0,
+        x: 360 + Math.random() * 480,
+        y: 380 + Math.random() * 260,
+        targetX: null,
+        targetY: null
+      }))
+    );
+    broadcastState({
+      quizPhase: 'waiting',
+      trapdoorOpen: false,
+      trapdoorProgress: 0
+    });
+  };
+
+  // 사회자 수동 개별 단원 즉시 탈락(바닥 추락!) 또는 부활 버튼 핸들러
+  const handleTogglePlayerEliminate = (targetPlayerId) => {
+    setPlayers((prev) =>
+      prev.map((p) => {
+        if (p.id !== targetPlayerId) return p;
+        if (p.status === 'alive' || p.status === 'cheering') {
+          soundFX.playTrapdoorDrop();
+          // 2.2초 후 관전자로 전환
+          setTimeout(() => {
+            setPlayers((curr) =>
+              curr.map((item) =>
+                item.id === targetPlayerId && item.status === 'falling'
+                  ? { ...item, status: 'spectator', fallProgress: 1, isMoving: false }
+                  : item
+              )
+            );
+          }, 2200);
+          return { ...p, status: 'falling', fallProgress: 0.05, emote: '😱', isMoving: false, targetX: null, targetY: null };
+        } else {
+          soundFX.playSelect();
+          return { ...p, status: 'alive', fallProgress: 0, emote: '✨', x: 600, y: 480 };
+        }
+      })
+    );
+  };
+
+  // 현재 문제의 정답(A/B) 즉시 변경 (예: 김다솔 문제에서 사회자가 A/B 정답을 실시간으로 바꿀 때 유용)
+  const handleToggleCurrentQuizAnswer = () => {
+    if (!currentQuiz) return;
+    const nextAns = currentQuiz.answer === 'A' ? 'B' : 'A';
+    setQuizzes((prev) =>
+      prev.map((q) => (q.id === currentQuiz.id ? { ...q, answer: nextAns } : q))
+    );
+  };
+
+  // 게임 종료 후 음악실 로비로 전원 복귀
+  const handleReturnToLobby = () => {
+    soundFX.playSelect();
+    broadcastState({
+      activeRoom: 'lobby',
+      quizPhase: 'waiting',
+      trapdoorOpen: false,
+      trapdoorProgress: 0
+    });
+
+    setPlayers((prev) =>
+      prev.map((p, idx) => ({
+        ...p,
+        room: 'lobby',
+        status: 'alive',
+        fallProgress: 0,
+        selectedChoice: null,
+        targetX: null,
+        targetY: null,
+        gamesPlayed: p.gamesPlayed + 1,
+        x: 240 + (idx % 6) * 135,
+        y: 440 + Math.floor(idx / 6) * 95
+      }))
+    );
+  };
+
+  // 새 퀴즈 등록
+  const handleAddQuiz = (e) => {
+    e.preventDefault();
+    if (!newQuizForm.title.trim()) return;
+    const created = {
+      ...newQuizForm,
+      id: 'q_' + Date.now(),
+      melodyId: newQuizForm.room === 'music' ? 'good_day' : undefined
+    };
+    setQuizzes((prev) => [...prev, created]);
+    setNewQuizForm({
+      room: 'music',
+      title: '',
+      desc: '',
+      optionA: '',
+      optionB: '',
+      answer: 'A',
+      duration: 15
+    });
+  };
+
+  // 실시간 A / B 분포 및 생존자 통계
+  const roomStats = useMemo(() => {
+    const alive = players.filter((p) => p.status === 'alive' || p.status === 'cheering');
+    const spectators = players.filter((p) => p.status === 'spectator' || p.status === 'falling');
+    const countA = alive.filter((p) => p.x < 580).length;
+    const countB = alive.filter((p) => p.x > 620).length;
+    const countNeutral = alive.length - countA - countB;
+    return { aliveCount: alive.length, spectatorCount: spectators.length, countA, countB, countNeutral };
+  }, [players]);
+
+  // 누적 점수 순위표 정렬
+  const sortedLeaderboard = useMemo(() => {
+    return [...players].sort((a, b) => b.score - a.score || b.wins - a.wins);
+  }, [players]);
+
+  // ==========================================
+  // 10. VIRTUAL JOYSTICK TOUCH HANDLERS (모바일 조작)
+  // ==========================================
+  const handleJoystickMove = (dx, dy) => {
+    joystickVectorRef.current = { dx, dy, active: true };
+  };
+  const handleJoystickRelease = () => {
+    joystickVectorRef.current = { dx: 0, dy: 0, active: false };
+  };
+
+  return (
+    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col select-none overflow-x-hidden">
+      {/* ==========================================
+          TOP NAVIGATION BAR (참가자 / 사회자 / 대형스크린 전환 및 Phase 1 검증)
+      ========================================== */}
+      <header className="bg-stone-900/95 border-b border-amber-900/40 px-3 py-2 flex flex-wrap items-center justify-between gap-2 z-30 shadow-lg">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center shadow-md">
+            <Music className="w-5 h-5 text-stone-950" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="font-bold text-sm sm:text-base text-amber-100 tracking-tight">
+                Hanwoori Choir 20기 송년회 파티
+              </h1>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
+                실시간 {players.length}명 접속중
+              </span>
+            </div>
+            <p className="text-[11px] text-stone-400 hidden sm:block">
+              원본 음악실 완벽 재현 · 독립 SD 아바타 · 실시간 A/B 서바이벌 퀴즈
+            </p>
+          </div>
+        </div>
+
+        {/* 3대 핵심 뷰 전환 탭 (/ , /admin , /screen) */}
+        <div className="flex items-center gap-1.5 bg-stone-950/90 p-1 rounded-xl border border-stone-800">
+          <button
+            onClick={() => setViewMode('player')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              viewMode === 'player'
+                ? 'bg-amber-500 text-stone-950 shadow'
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>참가자 화면 (/)</span>
+          </button>
+          <button
+            onClick={() => setViewMode('admin')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              viewMode === 'admin'
+                ? 'bg-rose-500 text-white shadow'
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>사회자 (/admin)</span>
+          </button>
+          <button
+            onClick={() => setViewMode('screen')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              viewMode === 'screen'
+                ? 'bg-sky-500 text-stone-950 shadow'
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            <Monitor className="w-3.5 h-3.5" />
+            <span>행사장 스크린 (/screen)</span>
+          </button>
+        </div>
+
+        {/* 우측 유틸리티 버튼 (Phase 1 검증, 충돌 박스, 순위표, 음소거) */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowPhase1Modal(true)}
+            className="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Phase 1~5 검증</span>
+          </button>
+          <button
+            onClick={() => setShowCollisionDebug((v) => !v)}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-1 transition ${
+              showCollisionDebug
+                ? 'bg-rose-500/25 border-rose-400 text-rose-200'
+                : 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700'
+            }`}
+            title="가구 충돌 영역 및 Y-Sorting 깊이 기준선 보기"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">충돌/레이어</span>
+          </button>
+          <button
+            onClick={() => setShowLeaderboardModal(true)}
+            className="px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 border border-stone-700 text-amber-300 text-xs font-semibold flex items-center gap-1"
+          >
+            <Trophy className="w-3.5 h-3.5" />
+            <span>순위표</span>
+          </button>
+          <button
+            onClick={() => {
+              soundFX.muted = !soundMuted;
+              setSoundMuted(!soundMuted);
+            }}
+            className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 border border-stone-700 text-stone-300"
+            title="효과음 켜기/끄기"
+          >
+            {soundMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+          </button>
+        </div>
+      </header>
+
+      {/* ==========================================
+          MAIN CONTENT AREA (뷰 모드에 따른 레이아웃 구성)
+      ========================================== */}
+      <main className="flex-1 flex flex-col lg:flex-row gap-3 p-2 sm:p-4 max-w-[1600px] w-full mx-auto items-center lg:items-stretch">
+        {/* LEFT / CENTER: 실시간 인터랙티브 음악실 & 퀴즈방 캔버스 */}
+        <div className="flex-1 flex flex-col items-center justify-center w-full relative">
+          {/* 상단 상태 배너 (현재 위치, 타이머, 생존자 현황, 포털 바로가기) */}
+          <div className="w-full max-w-[1100px] mb-2 flex flex-wrap items-center justify-between gap-2 bg-stone-900/90 border border-stone-800 px-3.5 py-2 rounded-2xl shadow-md">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold">
+                {gameState.activeRoom === 'lobby'
+                  ? '🎹 한우리 20기 음악실 로비'
+                  : gameState.activeRoom === 'music'
+                  ? '🎵 음악 퀴즈방 (서바이벌)'
+                  : '👤 인물 퀴즈방 (서바이벌)'}
+              </span>
+
+              {gameState.activeRoom === 'lobby' ? (
+                <div className="flex items-center gap-1.5 text-xs text-stone-300">
+                  <span>현재 열린 방:</span>
+                  {gameState.openRoom === 'music' && (
+                    <button
+                      onClick={() => handleEnterQuizRoom('music')}
+                      className="px-2.5 py-1 rounded-lg bg-pink-500 hover:bg-pink-400 text-stone-950 font-bold animate-pulse flex items-center gap-1"
+                    >
+                      <DoorOpen className="w-3.5 h-3.5" /> 음악 퀴즈방 입장하기
+                    </button>
+                  )}
+                  {gameState.openRoom === 'person' && (
+                    <button
+                      onClick={() => handleEnterQuizRoom('person')}
+                      className="px-2.5 py-1 rounded-lg bg-sky-400 hover:bg-sky-300 text-stone-950 font-bold animate-pulse flex items-center gap-1"
+                    >
+                      <DoorOpen className="w-3.5 h-3.5" /> 인물 퀴즈방 입장하기
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+                    생존 {roomStats.aliveCount}명
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-stone-800 text-stone-400">
+                    관전 {roomStats.spectatorCount}명
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">
+                    A구역: {roomStats.countA}명
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold">
+                    B구역: {roomStats.countB}명
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* 퀴즈 카운트다운 타이머 & 내 점수 */}
+            <div className="flex items-center gap-3">
+              {gameState.activeRoom !== 'lobby' && (
+                <div
+                  className={`px-3 py-1 rounded-xl font-extrabold text-sm flex items-center gap-1.5 border ${
+                    gameState.quizPhase === 'question' && gameState.timer <= 5
+                      ? 'bg-rose-600 text-white border-rose-300 animate-bounce'
+                      : 'bg-stone-800 text-amber-300 border-stone-700'
+                  }`}
+                >
+                  <span>⏱️ 제한시간: {gameState.timer}초</span>
+                  <span className="text-[11px] font-normal text-stone-300">
+                    ({gameState.quizPhase === 'question'
+                      ? '선택 중'
+                      : gameState.quizPhase === 'locked'
+                      ? '이동 잠금!'
+                      : gameState.quizPhase === 'revealed'
+                      ? '정답 공개/추락!'
+                      : gameState.quizPhase === 'winner'
+                      ? '우승자 탄생!'
+                      : '대기중'})
+                  </span>
+                </div>
+              )}
+
+              {myPlayer && (
+                <div className="text-xs bg-stone-800 px-3 py-1 rounded-xl border border-stone-700 flex items-center gap-2">
+                  <span className="text-stone-400">내 캐릭터:</span>
+                  <span className="font-bold text-amber-300">{myPlayer.nickname}</span>
+                  <span className="text-emerald-400 font-bold">{myPlayer.score}점</span>
+                  {myPlayer.status === 'spectator' && (
+                    <span className="px-1.5 py-0.5 rounded bg-rose-500/30 text-rose-200 text-[10px]">
+                      👻 관전자 모드
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 캔버스 래퍼 */}
+          <div className="relative w-full max-w-[1100px] aspect-[3/2] rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-900/50 bg-stone-900">
+            <canvas
+              ref={canvasRef}
+              width={MAP_WIDTH}
+              height={MAP_HEIGHT}
+              className="w-full h-full block object-contain"
+            />
+
+            {/* 우상단 참가자 수 캡슐 (첨부 이미지 우상단 '참가자 16명' 배지 완벽 재현) */}
+            <div className="absolute top-3 right-3 bg-stone-900/80 backdrop-blur-md border border-stone-600/60 px-3.5 py-1.5 rounded-full flex items-center gap-2 text-xs sm:text-sm font-bold text-stone-100 shadow-lg pointer-events-none">
+              <Users className="w-4 h-4 text-amber-300" />
+              <span>참가자 {players.length}명</span>
+            </div>
+
+            {/* 최후의 생존자 우승 발표 오버레이 */}
+            {gameState.quizPhase === 'winner' && (
+              <div className="absolute inset-0 bg-stone-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-20 animate-fade-in">
+                <div className="w-20 h-20 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center mb-3 animate-bounce">
+                  <Crown className="w-11 h-11 text-amber-300" />
+                </div>
+                <p className="text-amber-300 font-bold text-sm uppercase tracking-widest mb-1">
+                  HANWOORI CHOIR 20TH SURVIVAL WINNER
+                </p>
+                <h2 className="text-3xl sm:text-5xl font-extrabold text-white mb-2">
+                  🎉 {gameState.lastWinnerName || '우승자'} 단원 최종 우승! 🎉
+                </h2>
+                <p className="text-stone-300 text-sm sm:text-base mb-6">
+                  최후의 생존자 보너스 +50점이 누적되었습니다!
+                </p>
+                <button
+                  onClick={handleReturnToLobby}
+                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-rose-500 text-stone-950 font-extrabold text-sm shadow-xl hover:brightness-110 transition"
+                >
+                  🎹 전원 음악실 로비로 복귀하기
+                </button>
+              </div>
+            )}
+
+            {/* 퀴즈방 안일 때: 방식 B (화면의 A 또는 B 버튼 터치 시 자동 이동) 오버레이 버튼 */}
+            {gameState.activeRoom !== 'lobby' && myPlayer?.status === 'alive' && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10 w-[92%] sm:w-auto justify-center">
+                <button
+                  onClick={() => handleSelectZoneAutoWalk('A')}
+                  disabled={gameState.quizPhase === 'locked' || gameState.quizPhase === 'revealed'}
+                  className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm shadow-xl border-2 transition-all flex items-center justify-center gap-2 ${
+                    myPlayer.selectedChoice === 'A'
+                      ? 'bg-rose-600 text-white border-white scale-105'
+                      : 'bg-rose-950/90 hover:bg-rose-800 text-rose-100 border-rose-500/60'
+                  }`}
+                >
+                  <span className="w-6 h-6 rounded-lg bg-white text-rose-600 flex items-center justify-center font-black">
+                    A
+                  </span>
+                  <span>A구역 자동이동</span>
+                </button>
+
+                <button
+                  onClick={() => handleSelectZoneAutoWalk('B')}
+                  disabled={gameState.quizPhase === 'locked' || gameState.quizPhase === 'revealed'}
+                  className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm shadow-xl border-2 transition-all flex items-center justify-center gap-2 ${
+                    myPlayer.selectedChoice === 'B'
+                      ? 'bg-blue-600 text-white border-white scale-105'
+                      : 'bg-blue-950/90 hover:bg-blue-800 text-blue-100 border-blue-500/60'
+                  }`}
+                >
+                  <span className="w-6 h-6 rounded-lg bg-white text-blue-600 flex items-center justify-center font-black">
+                    B
+                  </span>
+                  <span>B구역 자동이동</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ==========================================
+              BOTTOM MOBILE TOUCH CONTROLS & EMOTES (모바일 D-Pad 조이스틱 + 포털 이동 + 감정표현)
+          ========================================== */}
+          {viewMode !== 'screen' && (
+            <div className="w-full max-w-[1100px] mt-3 grid grid-cols-1 md:grid-cols-3 gap-2.5 bg-stone-900/90 border border-stone-800 p-3 rounded-2xl">
+              {/* 1) 모바일 가상 방향 패드 (터치 & 마우스 지원) */}
+              <div className="flex items-center justify-between sm:justify-start gap-4">
+                <div className="grid grid-cols-3 gap-1 w-32 h-32 bg-stone-950 p-1.5 rounded-2xl border border-stone-800">
+                  <div />
+                  <button
+                    onMouseDown={() => handleJoystickMove(0, -1)}
+                    onMouseUp={handleJoystickRelease}
+                    onMouseLeave={handleJoystickRelease}
+                    onTouchStart={(e) => { e.preventDefault(); handleJoystickMove(0, -1); }}
+                    onTouchEnd={handleJoystickRelease}
+                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center"
+                  >
+                    <ArrowUp className="w-5 h-5" />
+                  </button>
+                  <div />
+                  <button
+                    onMouseDown={() => handleJoystickMove(-1, 0)}
+                    onMouseUp={handleJoystickRelease}
+                    onMouseLeave={handleJoystickRelease}
+                    onTouchStart={(e) => { e.preventDefault(); handleJoystickMove(-1, 0); }}
+                    onTouchEnd={handleJoystickRelease}
+                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div className="bg-stone-900 rounded-xl flex items-center justify-center text-[10px] text-stone-500 font-bold">
+                    이동
+                  </div>
+                  <button
+                    onMouseDown={() => handleJoystickMove(1, 0)}
+                    onMouseUp={handleJoystickRelease}
+                    onMouseLeave={handleJoystickRelease}
+                    onTouchStart={(e) => { e.preventDefault(); handleJoystickMove(1, 0); }}
+                    onTouchEnd={handleJoystickRelease}
+                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center"
+                  >
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                  <div />
+                  <button
+                    onMouseDown={() => handleJoystickMove(0, 1)}
+                    onMouseUp={handleJoystickRelease}
+                    onMouseLeave={handleJoystickRelease}
+                    onTouchStart={(e) => { e.preventDefault(); handleJoystickMove(0, 1); }}
+                    onTouchEnd={handleJoystickRelease}
+                    className="bg-stone-800 active:bg-amber-500 active:text-stone-950 rounded-xl flex items-center justify-center"
+                  >
+                    <ArrowDown className="w-5 h-5" />
+                  </button>
+                  <div />
+                </div>
+
+                <div className="text-xs space-y-1.5 text-stone-300">
+                  <div className="font-bold text-amber-200 flex items-center gap-1">
+                    <Compass className="w-4 h-4 text-amber-400" /> 캐릭터 조작 안내
+                  </div>
+                  <p className="text-[11px] text-stone-400">
+                    • 모바일: 좌측 방향 패드 터치
+                  </p>
+                  <p className="text-[11px] text-stone-400">
+                    • PC: 키보드 <kbd className="px-1.5 py-0.5 bg-stone-800 rounded">WASD</kbd> 또는 <kbd className="px-1.5 py-0.5 bg-stone-800 rounded">방향키</kbd>
+                  </p>
+                  <p className="text-[11px] text-emerald-400">
+                    • 피아노/테이블 뒤로 가면 자연스러운 가림 효과 적용!
+                  </p>
+                </div>
+              </div>
+
+              {/* 2) 로비 포털 원클릭 이동 & 감정표현 버튼 */}
+              <div className="flex flex-col justify-between gap-2">
+                <span className="text-xs font-bold text-stone-400">
+                  빠른 출입문 이동 & 감정표현
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {gameState.activeRoom === 'lobby' ? (
+                    <>
+                      <button
+                        onClick={() => handleWalkToPortal('music')}
+                        className="flex-1 px-3 py-2 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-pink-200 text-xs font-bold"
+                      >
+                        🎵 음악 퀴즈방 문 앞 이동
+                      </button>
+                      <button
+                        onClick={() => handleWalkToPortal('person')}
+                        className="flex-1 px-3 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-200 text-xs font-bold"
+                      >
+                        👤 인물 퀴즈방 문 앞 이동
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={handleReturnToLobby}
+                      className="w-full px-3 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold"
+                    >
+                      🎹 음악실 로비로 돌아가기
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {['🎵', '❤️', '👏', '🙌', '✨'].map((emo) => (
+                    <button
+                      key={emo}
+                      onClick={() => triggerEmote(emo)}
+                      className="flex-1 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-base border border-stone-700"
+                    >
+                      {emo}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3) 내 아바타 & 닉네임 즉시 변경 */}
+              <form onSubmit={handleEnterMusicRoom} className="flex flex-col justify-between gap-2">
+                <span className="text-xs font-bold text-stone-400">
+                  내 단원 닉네임 & 아바타 변경 (16종)
+                </span>
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={myNickname}
+                    onChange={(e) => setMyNickname(e.target.value)}
+                    placeholder="닉네임 입력"
+                    maxLength={8}
+                    className="w-28 px-2.5 py-1.5 rounded-xl bg-stone-950 border border-stone-700 text-xs text-white"
+                  />
+                  <select
+                    value={myAvatarId}
+                    onChange={(e) => setMyAvatarId(e.target.value)}
+                    className="flex-1 px-2 py-1.5 rounded-xl bg-stone-950 border border-stone-700 text-xs text-amber-200"
+                  >
+                    {AVATAR_PRESETS.map((av) => (
+                      <option key={av.id} value={av.id}>
+                        {av.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow"
+                >
+                  적용 및 캐릭터 동기화
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+
+        {/* ==========================================
+            RIGHT SIDEBAR PANEL (뷰 모드별 맞춤 제어판)
+        ========================================== */}
+        {viewMode === 'admin' && (
+          <aside className="w-full lg:w-[420px] bg-stone-900 border border-stone-800 rounded-2xl p-4 flex flex-col gap-4 max-h-[88vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-rose-400" />
+                <h2 className="font-extrabold text-base text-white">
+                  사회자 컨트롤 콘솔 (/admin)
+                </h2>
+              </div>
+              <span className="text-[11px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                관리자 인증됨
+              </span>
+            </div>
+
+            {/* 1. 퀴즈방 개방 및 이동 제어 */}
+            <div className="bg-stone-950/80 p-3.5 rounded-xl border border-stone-800 space-y-2.5">
+              <h3 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                <DoorOpen className="w-4 h-4" /> 1단계: 퀴즈방 개방 및 단원 이동
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => broadcastState({ openRoom: 'music' })}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                    gameState.openRoom === 'music'
+                      ? 'bg-pink-500 text-stone-950 border-pink-300'
+                      : 'bg-stone-900 text-stone-300 border-stone-700'
+                  }`}
+                >
+                  🎵 음악 퀴즈방 문 열기
+                </button>
+                <button
+                  onClick={() => broadcastState({ openRoom: 'person' })}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                    gameState.openRoom === 'person'
+                      ? 'bg-sky-400 text-stone-950 border-sky-200'
+                      : 'bg-stone-900 text-stone-300 border-stone-700'
+                  }`}
+                >
+                  👤 인물 퀴즈방 문 열기
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 pt-1">
+                <button
+                  onClick={() => handleEnterQuizRoom('music')}
+                  className="py-2 rounded-lg bg-pink-600/30 hover:bg-pink-600/50 border border-pink-500/40 text-pink-200 text-xs font-bold"
+                >
+                  음악방 전원입장
+                </button>
+                <button
+                  onClick={() => handleEnterQuizRoom('person')}
+                  className="py-2 rounded-lg bg-sky-600/30 hover:bg-sky-600/50 border border-sky-500/40 text-sky-200 text-xs font-bold"
+                >
+                  인물방 전원입장
+                </button>
+                <button
+                  onClick={handleReturnToLobby}
+                  className="py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-200 text-xs font-bold"
+                >
+                  로비 전원복귀
+                </button>
+              </div>
+            </div>
+
+            {/* 2. 문제 선택 및 퀴즈 진행 제어 (수동/자동 모드) */}
+            <div className="bg-stone-950/80 p-3.5 rounded-xl border border-stone-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                  <Play className="w-4 h-4" /> 2단계: 퀴즈 출제 및 바닥 추락 제어
+                </h3>
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={gameState.autoMode}
+                    onChange={(e) => broadcastState({ autoMode: e.target.checked })}
+                    className="rounded accent-amber-500"
+                  />
+                  <span className="text-stone-300">타이머 후 자동 추락</span>
+                </label>
+              </div>
+
+              <select
+                value={gameState.currentQuizId}
+                onChange={(e) => broadcastState({ currentQuizId: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-stone-900 border border-stone-700 text-xs text-white"
+              >
+                {quizzes.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    [{q.room === 'music' ? '음악' : '인물'}] {q.title} (정답:{q.answer})
+                  </option>
+                ))}
+              </select>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleStartQuestion(gameState.currentQuizId)}
+                  className="py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-extrabold text-xs flex items-center justify-center gap-1.5 shadow"
+                >
+                  <Play className="w-4 h-4" /> 문제 시작 (타이머)
+                </button>
+                <button
+                  onClick={executeRevealAndEliminate}
+                  className="py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow"
+                >
+                  <Sparkles className="w-4 h-4" /> 정답 공개 & 바닥 추락!
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1.5">
+                {currentQuiz?.room === 'music' && (
+                  <button
+                    onClick={() => soundFX.playSampleMelody(currentQuiz.melodyId || 'good_day')}
+                    className="py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-[11px] font-bold flex items-center justify-center gap-1"
+                  >
+                    <Radio className="w-3.5 h-3.5" /> 전주 멜로디
+                  </button>
+                )}
+                <button
+                  onClick={handleToggleCurrentQuizAnswer}
+                  className="py-2 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-[11px] font-bold flex items-center justify-center gap-1"
+                  title="현재 문제의 정답을 A ↔ B로 즉시 전환합니다"
+                >
+                  정답 전환 (현재:{currentQuiz?.answer})
+                </button>
+                <button
+                  onClick={handleReviveAllInRoom}
+                  className="py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-[11px] font-bold flex items-center justify-center gap-1"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> 전원 부활
+                </button>
+              </div>
+            </div>
+
+            {/* 2-1. 단원별 수동 즉시 탈락(바닥 추락) / 부활 제어판 */}
+            <div className="bg-stone-950/80 p-3.5 rounded-xl border border-stone-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4" /> 단원 개별 즉시 탈락(추락) / 부활 제어
+                </h3>
+                <span className="text-[10px] text-stone-400">버튼 클릭 시 즉시 반영</span>
+              </div>
+              <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
+                {players.map((p) => {
+                  const isAlive = p.status === 'alive' || p.status === 'cheering';
+                  return (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-800 text-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-stone-200">{p.nickname}</span>
+                        <span className="text-[10px] text-stone-400">
+                          ({p.selectedChoice ? `${p.selectedChoice}구역` : '미선택'} · {p.score}점)
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleTogglePlayerEliminate(p.id)}
+                        className={`px-2.5 py-1 rounded-md font-bold text-[11px] transition ${
+                          isAlive
+                            ? 'bg-rose-600 hover:bg-rose-500 text-white'
+                            : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                        }`}
+                      >
+                        {isAlive ? '💥 즉시 추락' : '✨ 부활시키기'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3. 음악실 칠판/공지사항 문구 및 AI 단원 봇 제어 */}
+            <div className="bg-stone-950/80 p-3.5 rounded-xl border border-stone-800 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-amber-300">
+                  3단계: 합창단 AI 시뮬레이션 & 공지사항
+                </h3>
+                <button
+                  onClick={() => setBotsEnabled((v) => !v)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${
+                    botsEnabled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-stone-800 text-stone-400'
+                  }`}
+                >
+                  {botsEnabled ? '🤖 AI 단원 15명 활성중' : '🤖 AI 단원 일시정지'}
+                </button>
+              </div>
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={gameState.noticeText.replace(/\n/g, ' ')}
+                  onChange={(e) => broadcastState({ noticeText: e.target.value })}
+                  placeholder="우하단 공지사항 보드 문구"
+                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-xs text-white"
+                />
+              </div>
+            </div>
+
+            {/* 4. 새 문제 직접 등록 폼 */}
+            <form onSubmit={handleAddQuiz} className="bg-stone-950/80 p-3.5 rounded-xl border border-stone-800 space-y-2">
+              <h3 className="text-xs font-bold text-amber-300 flex items-center gap-1">
+                <Plus className="w-4 h-4" /> 새 퀴즈 문제 추가
+              </h3>
+              <div className="grid grid-cols-2 gap-1.5">
+                <select
+                  value={newQuizForm.room}
+                  onChange={(e) => setNewQuizForm({ ...newQuizForm, room: e.target.value })}
+                  className="px-2 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-xs"
+                >
+                  <option value="music">🎵 음악 퀴즈방</option>
+                  <option value="person">👤 인물 퀴즈방</option>
+                </select>
+                <select
+                  value={newQuizForm.answer}
+                  onChange={(e) => setNewQuizForm({ ...newQuizForm, answer: e.target.value })}
+                  className="px-2 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-xs"
+                >
+                  <option value="A">정답: A 구역</option>
+                  <option value="B">정답: B 구역</option>
+                </select>
+              </div>
+              <input
+                type="text"
+                value={newQuizForm.title}
+                onChange={(e) => setNewQuizForm({ ...newQuizForm, title: e.target.value })}
+                placeholder="문제 제목 입력"
+                className="w-full px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-xs"
+              />
+              <div className="grid grid-cols-2 gap-1.5">
+                <input
+                  type="text"
+                  value={newQuizForm.optionA}
+                  onChange={(e) => setNewQuizForm({ ...newQuizForm, optionA: e.target.value })}
+                  placeholder="보기 A 입력"
+                  className="px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-xs"
+                />
+                <input
+                  type="text"
+                  value={newQuizForm.optionB}
+                  onChange={(e) => setNewQuizForm({ ...newQuizForm, optionB: e.target.value })}
+                  placeholder="보기 B 입력"
+                  className="px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-xs"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs"
+              >
+                문제 목록에 추가하기
+              </button>
+            </form>
+          </aside>
+        )}
+
+        {/* 참가자 뷰일 때 우측 미니 상태창 & 빠른 테스트 가이드 */}
+        {viewMode === 'player' && (
+          <aside className="w-full lg:w-[330px] bg-stone-900 border border-stone-800 rounded-2xl p-4 flex flex-col gap-3 shadow-xl">
+            <div className="flex items-center justify-between border-b border-stone-800 pb-2.5">
+              <span className="font-bold text-sm text-amber-200 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-400" /> 송년회 실시간 현황
+              </span>
+              <button
+                onClick={() => setViewMode('admin')}
+                className="text-[11px] text-rose-300 hover:underline font-semibold"
+              >
+                사회자 진행 열기 →
+              </button>
+            </div>
+
+            {/* 빠른 체험 원클릭 버튼 (사용자가 즉시 퀴즈/추락을 테스트할 수 있도록 제공) */}
+            <div className="bg-stone-950 p-3 rounded-xl border border-amber-500/30 space-y-2">
+              <div className="text-xs font-bold text-amber-300">
+                ⚡ 빠른 게임 진행 테스트 (원클릭)
+              </div>
+              <p className="text-[11px] text-stone-400">
+                로비 산책 후 바로 퀴즈방 서바이벌과 바닥 추락 연출을 체험해 보세요!
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => {
+                    handleEnterQuizRoom('music');
+                    setTimeout(() => handleStartQuestion('m1'), 300);
+                  }}
+                  className="py-2 px-2 rounded-lg bg-pink-500 hover:bg-pink-400 text-stone-950 font-bold text-xs"
+                >
+                  🎵 음악퀴즈 시작!
+                </button>
+                <button
+                  onClick={() => {
+                    handleEnterQuizRoom('person');
+                    setTimeout(() => handleStartQuestion('p1'), 300);
+                  }}
+                  className="py-2 px-2 rounded-lg bg-sky-400 hover:bg-sky-300 text-stone-950 font-bold text-xs"
+                >
+                  👤 인물퀴즈 시작!
+                </button>
+              </div>
+              {gameState.activeRoom !== 'lobby' && (
+                <button
+                  onClick={executeRevealAndEliminate}
+                  className="w-full py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs"
+                >
+                  💥 즉시 정답 공개 & 오답자 바닥 추락 보기!
+                </button>
+              )}
+            </div>
+
+            {/* 실시간 TOP 7 랭킹 */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-stone-300">🏆 실시간 종합 순위 TOP 7</span>
+                <button
+                  onClick={() => setShowLeaderboardModal(true)}
+                  className="text-[11px] text-amber-300 hover:underline"
+                >
+                  전체 보기
+                </button>
+              </div>
+              <div className="space-y-1.5 overflow-y-auto pr-1">
+                {sortedLeaderboard.slice(0, 7).map((p, idx) => (
+                  <div
+                    key={p.id}
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs border ${
+                      p.id === myId
+                        ? 'bg-amber-500/20 border-amber-400 text-white font-bold'
+                        : 'bg-stone-950/70 border-stone-800 text-stone-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black ${
+                          idx === 0
+                            ? 'bg-amber-400 text-stone-950'
+                            : idx === 1
+                            ? 'bg-stone-300 text-stone-950'
+                            : idx === 2
+                            ? 'bg-amber-700 text-white'
+                            : 'bg-stone-800 text-stone-400'
+                        }`}
+                      >
+                        {idx + 1}
+                      </span>
+                      <span>{p.nickname}</span>
+                      {p.status === 'spectator' && (
+                        <span className="text-[10px] text-rose-400">👻관전</span>
+                      )}
+                    </div>
+                    <span className="font-bold text-emerald-400">{p.score}점</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+        )}
+      </main>
+
+      {/* ==========================================
+          MODAL 1: PHASE 1~5 구현 검증 및 Windows 서버 가이드
+      ========================================== */}
+      {showPhase1Modal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-stone-900 border border-stone-700 rounded-2xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+              <h2 className="text-lg font-extrabold text-amber-300 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                Hanwoori Choir 20기 송년회 — Phase 1~5 검증 리포트
+              </h2>
+              <button
+                onClick={() => setShowPhase1Modal(false)}
+                className="text-stone-400 hover:text-white text-sm font-bold"
+              >
+                닫기 ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-stone-300 leading-relaxed">
+              <div className="p-3.5 rounded-xl bg-stone-950 border border-emerald-500/30 space-y-1.5">
+                <div className="font-bold text-emerald-400 text-sm">
+                  ✅ Phase 1 검증 (디자인 & 배경 분리 & 독립 아바타)
+                </div>
+                <p>• <b>고정 캐릭터/닉네임 완전 제거:</b> 원본 그림을 그대로 덮어쓰지 않고, 음악실 마루·칠판·그랜드피아노·이젤·티테이블·Welcome 매트·공지사항·하얀 강아지·밤하늘 창문을 깨끗한 배경 레이어로 완벽 복원했습니다.</p>
+                <p>• <b>독립 아바타 16종 & 동적 닉네임:</b> 지휘자, 예진, 주아, 병수, 원배, 승환, 태율, 제환, 현주, 경환, 지은, 인애, 유정, 유빈, 규민, 동원, 다석, 김다솔 등 18종의 SD 아바타가 독립된 투명 레이어로 생성되며 실시간 닉네임이 표시됩니다.</p>
+                <p>• <b>가구 충돌 및 Y-Sorting 가림 효과:</b> 피아노나 테이블 뒤로 걸어가면 가구가 캐릭터 하단을 자연스럽게 가립니다. (상단 <kbd className="px-1.5 py-0.5 bg-stone-800 rounded">충돌/레이어</kbd> 버튼으로 히트박스 확인 가능)</p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-stone-950 border border-amber-500/30 space-y-1.5">
+                <div className="font-bold text-amber-300 text-sm">
+                  ✅ Phase 2 ~ 5 검증 (멀티플레이, 퀴즈방, 바닥 추락, 사회자/스크린)
+                </div>
+                <p>• <b>방식 A & 방식 B 동시 지원:</b> 퀴즈방에서 조이스틱/키보드로 직접 이동(방식 A)하거나, 하단 A/B 버튼을 터치해 자동 이동(방식 B)할 수 있으며, 자동 이동 중 수동 조작 시 즉시 수동 조작으로 전환됩니다.</p>
+                <p>• <b>오답 구역 바닥 열림 & 추락 연출:</b> 정답 공개 시 오답 구역 바닥 플랫폼이 양옆으로 열리며 캐릭터들이 회전하며 아래로 추락하고 관전자 모드(👻)로 전환됩니다.</p>
+                <p>• <b>Windows PC 로컬 서버 & QR 접속 안내:</b> 가정용 Windows PC에서 Node.js + Vite(`npm run dev -- --host`)로 실행 후 동일 Wi-Fi 또는 포트포워딩/ngrok 주소를 QR코드로 생성하면 단원 30~50명이 앱 설치 없이 스마트폰 브라우저로 즉시 접속할 수 있습니다.</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => {
+                  setShowCollisionDebug(true);
+                  setShowPhase1Modal(false);
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-500/20 border border-rose-400 text-rose-200 text-xs font-bold"
+              >
+                충돌/Y-Sorting 디버그 켜기
+              </button>
+              <button
+                onClick={() => setShowPhase1Modal(false)}
+                className="px-5 py-2 rounded-xl bg-amber-500 text-stone-950 text-xs font-extrabold"
+              >
+                확인 완료
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL 2: 전체 누적 점수 및 종합 순위표
+      ========================================== */}
+      {showLeaderboardModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-stone-900 border border-stone-700 rounded-2xl max-w-xl w-full p-6 space-y-4 max-h-[85vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+              <h2 className="text-lg font-extrabold text-amber-300 flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-amber-400" />
+                한우리 합창단 20기 송년회 종합 순위표
+              </h2>
+              <button
+                onClick={() => setShowLeaderboardModal(false)}
+                className="text-stone-400 hover:text-white text-sm font-bold"
+              >
+                닫기 ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+              {sortedLeaderboard.map((p, idx) => (
+                <div
+                  key={p.id}
+                  className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-xs border ${
+                    p.id === myId
+                      ? 'bg-amber-500/20 border-amber-400 text-white font-bold'
+                      : 'bg-stone-950 border-stone-800 text-stone-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`w-6 h-6 rounded-full flex items-center justify-center font-black ${
+                        idx === 0
+                          ? 'bg-amber-400 text-stone-950'
+                          : idx === 1
+                          ? 'bg-stone-300 text-stone-950'
+                          : idx === 2
+                          ? 'bg-amber-700 text-white'
+                          : 'bg-stone-800 text-stone-400'
+                      }`}
+                    >
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <div className="font-bold text-sm flex items-center gap-1.5">
+                        <span>{p.nickname}</span>
+                        {p.id === myId && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                            나 (Me)
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-stone-400">
+                        정답 {p.correctCount}회 · 우승 {p.wins}회 · 참가 {p.gamesPlayed}게임
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-base font-extrabold text-emerald-400">{p.score}점</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
