@@ -419,9 +419,222 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// 3.1 배경 레이어 (고정 캐릭터/닉네임 완전 제거 & 원본 파스텔 원목 음악실 복원)
+// 원본 고화질 일러스트 대기실 배경 이미지 로드
+let lobbyBgImage = null;
+if (typeof window !== 'undefined') {
+  lobbyBgImage = new Image();
+  lobbyBgImage.src = `${import.meta.env.BASE_URL}lobby_bg.jpg`;
+}
+
+// 3.1 배경 레이어 (원본 고화질 일러스트 + 요청된 정밀 패치 & 크리스마스 테마 렌더러)
 function drawMusicRoomBackground(ctx, time, gameState, showOriginalOverlay) {
-  // 1) 전체 바닥 (따뜻한 파스텔 원목 마루)
+  const isImageLoaded = lobbyBgImage && lobbyBgImage.complete && lobbyBgImage.naturalWidth > 0;
+
+  if (isImageLoaded) {
+    // 1. 고화질 원본 일러스트 배경 렌더링 (1200 x 800)
+    ctx.drawImage(lobbyBgImage, 0, 0, MAP_WIDTH, MAP_HEIGHT);
+
+    // 2. [패치 1] 상단 칠판 메인 타이틀 패치 ('삼성 한우리 합창단 20기' 단독, -Hanwoori- 완전 제거)
+    // 원본 칠판 내부 텍스트 영역(335~840, 38~188)을 칠판 초록색으로 자연스럽게 덮음
+    ctx.save();
+    ctx.fillStyle = '#233d32';
+    drawRoundedRect(ctx, 335, 38, 500, 150, 4);
+    ctx.fill();
+
+    // 칠판 상단 나무 프레임에 소복이 쌓인 눈꽃 캡 (Snow Cap)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(330, 16);
+    for (let sx = 330; sx <= 840; sx += 20) {
+      ctx.lineTo(sx + 10, 16 + (Math.sin(sx * 0.2) > 0 ? 5 : 1));
+    }
+    ctx.lineTo(840, 12);
+    ctx.lineTo(330, 12);
+    ctx.closePath();
+    ctx.fill();
+
+    // 칠판 상단 중앙 크리스마스 리스 (Wreath)
+    const wx = 585;
+    const wy = 22;
+    ctx.beginPath();
+    ctx.arc(wx, wy, 24, 0, Math.PI * 2);
+    ctx.strokeStyle = '#1d5432';
+    ctx.lineWidth = 14;
+    ctx.stroke();
+    // 리스 빨간 베리
+    ctx.fillStyle = '#e63946';
+    [[-16, 0], [16, 0], [0, 16], [-11, 11], [11, 11]].forEach(([dx, dy]) => {
+      ctx.beginPath();
+      ctx.arc(wx + dx, wy + dy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    // 리스 상단 빨간 리본
+    ctx.fillStyle = '#d90429';
+    ctx.beginPath();
+    ctx.ellipse(wx - 7, wy - 14, 8, 5, -0.4, 0, Math.PI * 2);
+    ctx.ellipse(wx + 7, wy - 14, 8, 5, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(wx - 3, wy - 16, 6, 6);
+
+    // 칠판 텍스트 ('삼성 한우리 합창단 20기' 단독 정중앙 메인 타이틀)
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff9e6';
+    ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
+    ctx.shadowBlur = 14;
+    ctx.font = 'bold 36px "Noto Serif KR", "Georgia", serif';
+    ctx.fillText('삼성 한우리 합창단 20기', 585, 115);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // 3. [패치 2] 피아노 옆 이젤 게시판 지우기 (X: 645~785, Y: 400~525)
+    // 피아노 우측 바닥과 피아노 러그를 자연스럽게 복원하고 아기자기한 크리스마스 선물 상자 더미 배치!
+    ctx.save();
+    // 바닥 러그 & 마루 패치 (이젤 완전 덮기)
+    ctx.fillStyle = '#d6bfa8';
+    ctx.beginPath();
+    ctx.ellipse(690, 445, 68, 48, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#b6804d';
+    ctx.beginPath();
+    ctx.ellipse(715, 485, 55, 32, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 이젤 자리에 예쁜 크리스마스 선물 상자들 (이젤 글씨 완전 덮음!)
+    const bx = 675;
+    const by = 435;
+    // 빨간 큰 선물 상자
+    ctx.fillStyle = '#d90429';
+    drawRoundedRect(ctx, bx, by, 48, 42, 6);
+    ctx.fill();
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(bx + 21, by, 6, 42);
+    ctx.fillRect(bx, by + 18, 48, 6);
+    // 빨간 리본 나비매듭
+    ctx.beginPath();
+    ctx.ellipse(bx + 18, by - 4, 7, 5, -0.4, 0, Math.PI * 2);
+    ctx.ellipse(bx + 30, by - 4, 7, 5, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 노란 미니 선물 상자
+    ctx.fillStyle = '#ffb703';
+    drawRoundedRect(ctx, bx + 42, by + 12, 34, 30, 4);
+    ctx.fill();
+    ctx.fillStyle = '#2b9348';
+    ctx.fillRect(bx + 56, by + 12, 5, 30);
+    ctx.fillRect(bx + 42, by + 24, 34, 5);
+
+    // 에메랄드 작은 선물 상자
+    ctx.fillStyle = '#2d6a4f';
+    drawRoundedRect(ctx, bx - 18, by + 16, 28, 26, 4);
+    ctx.fill();
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(bx - 6, by + 16, 4, 26);
+    ctx.restore();
+
+    // 4. [패치 3] 인물퀴즈방 옆 튀어나간 'Music People Together Hanwoori' 보드 지우기 (X: 1115~1195, Y: 70~250)
+    ctx.save();
+    // 주변 벽면 색상으로 깨끗하게 덮기
+    ctx.fillStyle = '#e8d4be';
+    ctx.fillRect(1115, 65, 85, 185);
+    ctx.fillStyle = '#c8a88c';
+    ctx.fillRect(1115, 230, 85, 14); // 몰딩 라인 복원
+
+    // 대신 벽면에 예쁜 크리스마스 산타 양말 2개 걸기
+    [1130, 1160].forEach((sx, i) => {
+      ctx.fillStyle = i === 0 ? '#e63946' : '#2a9d8f';
+      ctx.beginPath();
+      ctx.moveTo(sx, 100);
+      ctx.lineTo(sx + 15, 100);
+      ctx.lineTo(sx + 15, 130);
+      ctx.lineTo(sx + 24, 137);
+      ctx.lineTo(sx + 20, 147);
+      ctx.lineTo(sx, 138);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(sx - 2, 97, 19, 7);
+    });
+    ctx.restore();
+
+    // 5. [패치 4] 공지사항 보드 문구 (우하단 X: 1045~1170, Y: 660~780)
+    ctx.save();
+    const nx = 1045;
+    const ny = 660;
+    // 종이 배경 깨끗하게 덮기
+    ctx.fillStyle = '#f5e9d9';
+    drawRoundedRect(ctx, nx, ny, 125, 115, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#d4bba2';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 상단 '오늘의 안건' 타이틀
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#78350f';
+    ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+    ctx.fillText('📌 오늘의 안건', nx + 62, ny + 20);
+
+    // 본문 손글씨 문구 ("배신자 이민우 20기 재가입 투표")
+    ctx.fillStyle = '#1c1917';
+    ctx.font = 'bold 13px "Noto Sans KR", sans-serif';
+    ctx.fillText('오늘의 안건', nx + 62, ny + 46);
+    ctx.fillText('"배신자 이민우', nx + 62, ny + 68);
+    ctx.fillText('20기 재가입 투표"', nx + 62, ny + 90);
+
+    ctx.fillStyle = '#d90429';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('🎄 Hanwoori 20기 🎄', nx + 62, ny + 110);
+    ctx.restore();
+
+    // 6. [패치 5] 하단 중앙 매트 문구
+    ctx.save();
+    const matX = 415;
+    const matY = 640;
+    const matW = 370;
+    const matH = 115;
+    ctx.fillStyle = '#1e4d34';
+    drawRoundedRect(ctx, matX, matY, matW, matH, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(matX + 8, matY + 8, matW - 16, matH - 16);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff9e6';
+    ctx.font = 'bold 28px "Georgia", "Noto Serif KR", serif';
+    ctx.fillText('🎄 Merry Christmas! 🎄', matX + matW / 2, matY + 52);
+    ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+    ctx.fillStyle = '#ffd166';
+    ctx.fillText('삼성 한우리 합창단 20기', matX + matW / 2, matY + 88);
+    ctx.font = '26px serif';
+    ctx.fillText('❄️', matX + 42, matY + 68);
+    ctx.fillText('❄️', matX + matW - 42, matY + 68);
+    ctx.restore();
+
+    // 7. [패치 6] 상단 전체 알록달록 반짝이는 LED 크리스마스 전구 스트링 (0 ~ 1200)
+    ctx.save();
+    const bulbColors = ['#ff4d4d', '#2ecc71', '#ffd700', '#ffffff', '#ff7675', '#00cec9'];
+    for (let x = 15; x < MAP_WIDTH - 15; x += 36) {
+      const by = 8 + Math.sin(x * 0.05) * 6;
+      const color = bulbColors[Math.floor((x / 36 + time * 3) % bulbColors.length)];
+      const glow = ctx.createRadialGradient(x, by, 1, x, by, 15);
+      glow.addColorStop(0, color);
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(x, by, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, by, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    return; // 원본 이미지 및 패치 렌더링 완료!
+  }
+
+  // 1) 전체 바닥 (따뜻한 파스텔 원목 마루 - 폴백)
   const floorGrad = ctx.createLinearGradient(0, 220, 0, MAP_HEIGHT);
   floorGrad.addColorStop(0, '#c98e54');
   floorGrad.addColorStop(0.5, '#b87b43');
@@ -901,6 +1114,10 @@ function drawPortalArch(ctx, { x, y, w, h, title, subtitle, isPink, isOpen, time
 
 // 3.2 Y-Sorting 대상 가구 오브젝트 렌더러 (캐릭터가 가구 뒤로 가면 자연스럽게 가려짐)
 function getFurnitureDrawables(noticeText) {
+  // 원본 고화질 일러스트가 로드된 경우 이미지에 가구 디테일이 이미 완벽히 들어있으므로 중복 렌더링 방지
+  if (lobbyBgImage && lobbyBgImage.complete && lobbyBgImage.naturalWidth > 0) {
+    return [];
+  }
   return [
     // 1) 중앙 그랜드 피아노 (sortY: 380)
     {
