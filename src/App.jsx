@@ -451,8 +451,36 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// 3.1 배경 레이어 (따뜻한 지브리 애니메이션 풍 2D 대기실 일러스트 & 크리스마스 연출)
+// 3.0.1 대기실 배경 이미지 프리로더 (선명화 처리된 사진 배경)
+let lobbyBgImage = null;
+if (typeof window !== 'undefined') {
+  lobbyBgImage = new Image();
+  lobbyBgImage.src = `${import.meta.env.BASE_URL}lobby_bg.jpg?v=20261126_photo`;
+}
+
+// 3.1 배경 레이어 (선명화 처리된 사진 배경 우선 사용 + 폴백 캔버스)
 function drawMusicRoomBackground(ctx, time, gameState) {
+  if (lobbyBgImage && lobbyBgImage.complete && lobbyBgImage.naturalWidth > 0) {
+    ctx.drawImage(lobbyBgImage, 0, 0, MAP_WIDTH, MAP_HEIGHT);
+
+    // 포털 개방/대기 상태 배지만 깔끔하게 표시
+    const portals = [
+      { x: 118, y: 145, w: 180, isOpen: gameState.openRoom === 'music' },
+      { x: 902, y: 145, w: 180, isOpen: gameState.openRoom === 'person' }
+    ];
+    portals.forEach(({ x, y, w, isOpen }) => {
+      ctx.save();
+      ctx.fillStyle = isOpen ? '#10b981' : 'rgba(30,41,59,0.75)';
+      drawRoundedRect(ctx, x + w / 2 - 46, y - 16, 92, 24, 12);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px "Noto Sans KR", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isOpen ? '🔓 입장 가능!' : '🔒 대기중', x + w / 2, y);
+      ctx.restore();
+    });
+    return;
+  }
 
   // 1) 전체 바닥 (따뜻한 파스텔 원목 마루 - 폴백)
   const floorGrad = ctx.createLinearGradient(0, 220, 0, MAP_HEIGHT);
@@ -1010,6 +1038,9 @@ function drawPortalArch(ctx, { x, y, w, h, title, subtitle, isPink, isOpen, time
 
 // 3.2 Y-Sorting 대상 가구 오브젝트 렌더러 (캐릭터가 가구 뒤로 가면 자연스럽게 가려짐)
 function getFurnitureDrawables(noticeText) {
+  if (lobbyBgImage && lobbyBgImage.complete && lobbyBgImage.naturalWidth > 0) {
+    return [];
+  }
   return [
     // 1) 중앙 그랜드 피아노 (sortY: 380)
     {
