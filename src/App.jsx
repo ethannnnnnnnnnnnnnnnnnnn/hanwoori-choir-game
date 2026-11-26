@@ -446,7 +446,7 @@ const AVATAR_SPRITE_NAMES = [
 if (typeof window !== 'undefined') {
   AVATAR_SPRITE_NAMES.forEach((name) => {
     const img = new Image();
-    img.src = `${import.meta.env.BASE_URL}avatars/${name}.png`;
+    img.src = `${import.meta.env.BASE_URL}avatars/${name}.png?v=20261126_v2`;
     AVATAR_SPRITES[name] = img;
   });
 }
@@ -1619,9 +1619,9 @@ function drawChibiAvatar(ctx, player, isMe, time) {
     if (dir === 'left') {
       ctx.scale(-1, 1);
     }
-    const sw = spriteImg.naturalWidth;
-    const sh = spriteImg.naturalHeight;
-    ctx.drawImage(spriteImg, -sw / 2, -sh + bodyY, sw, sh);
+    const targetH = spriteKey === 'puppy' ? 48 : 64;
+    const targetW = spriteImg.naturalWidth * (targetH / spriteImg.naturalHeight);
+    ctx.drawImage(spriteImg, -targetW / 2, -targetH + bodyY, targetW, targetH);
     ctx.restore();
   } else {
     // 2) 뒷머리 (롱헤어/트윈테일 등 - 폴백)
@@ -1847,7 +1847,7 @@ function AvatarThumbnail({ avatarId, size = 64 }) {
       style={{ width: `${size}px`, height: `${size}px` }}
     >
       <img
-        src={`${import.meta.env.BASE_URL}avatars/${spriteKey}.png`}
+        src={`${import.meta.env.BASE_URL}avatars/${spriteKey}.png?v=20261126_v2`}
         alt={preset?.name || avatarId}
         className="max-w-full max-h-full object-contain drop-shadow pointer-events-none select-none transition-transform hover:scale-105"
       />
