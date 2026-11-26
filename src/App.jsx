@@ -451,11 +451,11 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// 3.0.1 대기실 배경 이미지 프리로더 (선명화 처리된 사진 배경)
+// 3.0.1 대기실 배경 이미지 프리로더 (고화질 크리스마스 배경 일러스트)
 let lobbyBgImage = null;
 if (typeof window !== 'undefined') {
   lobbyBgImage = new Image();
-  lobbyBgImage.src = `${import.meta.env.BASE_URL}lobby_bg.jpg?v=20261126_photo`;
+  lobbyBgImage.src = `${import.meta.env.BASE_URL}lobby_bg.jpg?v=20261126_v2`;
 }
 
 // 3.1 배경 레이어 (선명화 처리된 사진 배경 우선 사용 + 폴백 캔버스)
