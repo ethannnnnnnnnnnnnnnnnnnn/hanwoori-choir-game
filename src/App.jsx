@@ -3716,7 +3716,7 @@ export default function App() {
                 삼성 한우리 합창단 20기
               </h2>
               <p className="text-xs sm:text-sm text-amber-300 font-bold">
-                🎄 2024 송년의 밤 & 크리스마스 파티 🎄
+                🎄 2026 송년의 밤 & 크리스마스 파티 🎄
               </p>
               <p className="text-[11px] text-stone-400">
                 본인 이름과 휴대폰 뒷번호 4자리를 입력하고 입장해주세요.
