@@ -447,7 +447,7 @@ const AVATAR_SPRITE_NAMES = [
 ];
 
 // Characters that have full 4-direction walk frames available
-const WALK_ANIM_CHARS = new Set(['conductor', 'hyuno']);
+const WALK_ANIM_CHARS = new Set(['conductor', 'hyuno', 'soohyun']);
 const WALK_DIRS = ['down', 'left', 'right', 'up'];
 const WALK_FRAME_COUNT = 4;
 
@@ -1660,6 +1660,14 @@ function drawChibiAvatar(ctx, player, isMe, time) {
     if (isSpriteLoaded) {
       ctx.save();
       if (dir === 'left') ctx.scale(-1, 1);
+      // 2.5D 생동감 있는 걷기 기울기 & 바운스 연출 (단일 스프라이트 캐릭터용)
+      if (isMoving) {
+        const tilt = Math.sin(time * 14) * 0.08;
+        ctx.rotate(tilt);
+        const scaleY = 1 + Math.abs(Math.sin(time * 14)) * 0.04;
+        const scaleX = 1 / scaleY;
+        ctx.scale(scaleX, scaleY);
+      }
       const targetH = spriteKey === 'puppy' ? 48 : 64;
       const targetW = spriteImg.naturalWidth * (targetH / spriteImg.naturalHeight);
       ctx.drawImage(spriteImg, -targetW / 2, -targetH + bodyY, targetW, targetH);
@@ -1839,6 +1847,7 @@ function drawChibiAvatar(ctx, player, isMe, time) {
       ctx.ellipse(2, headY - 16, 16, 7, -0.15, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+    }
     }
   }
 
