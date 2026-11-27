@@ -446,8 +446,11 @@ const AVATAR_SPRITE_NAMES = [
   'dion', 'minseok', 'soyoung', 'soohyun', 'dawon', 'haeun', 'puppy'
 ];
 
-// Characters that have full 4-direction walk frames available
-const WALK_ANIM_CHARS = new Set(['conductor', 'hyuno', 'soohyun']);
+// Characters that have full 4-direction walk frames available (all 13!)
+const WALK_ANIM_CHARS = new Set([
+  'conductor', 'dowon', 'hyuno', 'yujin', 'chaewon', 'seohyun',
+  'dion', 'minseok', 'soyoung', 'soohyun', 'dawon', 'haeun', 'puppy'
+]);
 const WALK_DIRS = ['down', 'left', 'right', 'up'];
 const WALK_FRAME_COUNT = 4;
 
