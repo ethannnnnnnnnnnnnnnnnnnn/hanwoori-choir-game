@@ -437,18 +437,50 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// 3.0 일러스트 아바타 스프라이트 이미지 프리로더 (13종 실물 SD 캐릭터)
-const AVATAR_SPRITES = {};
+// 3.0 아바타 스프라이트 프리로더 (4방향 × 4프레임 워킹 애니메이션 + 단일 스프라이트 폴백)
+const AVATAR_SPRITES = {};       // { name: Image }  — static fallback
+const AVATAR_WALK_FRAMES = {};   // { name_dir_frame: Image }
+
 const AVATAR_SPRITE_NAMES = [
   'conductor', 'dowon', 'hyuno', 'yujin', 'chaewon', 'seohyun',
   'dion', 'minseok', 'soyoung', 'soohyun', 'dawon', 'haeun', 'puppy'
 ];
+
+// Characters that have full 4-direction walk frames available
+const WALK_ANIM_CHARS = new Set(['conductor', 'hyuno']);
+const WALK_DIRS = ['down', 'left', 'right', 'up'];
+const WALK_FRAME_COUNT = 4;
+
 if (typeof window !== 'undefined') {
   AVATAR_SPRITE_NAMES.forEach((name) => {
+    // Static fallback sprite
     const img = new Image();
     img.src = `${import.meta.env.BASE_URL}avatars/${name}.png?v=20261126_v2`;
     AVATAR_SPRITES[name] = img;
+
+    // Walk animation frames (only for chars that have them)
+    if (WALK_ANIM_CHARS.has(name)) {
+      WALK_DIRS.forEach((dir) => {
+        for (let f = 0; f < WALK_FRAME_COUNT; f++) {
+          const fi = new Image();
+          fi.src = `${import.meta.env.BASE_URL}avatars/${name}_${dir}_${f}.png?v=20261127`;
+          AVATAR_WALK_FRAMES[`${name}_${dir}_${f}`] = fi;
+        }
+      });
+    }
   });
+}
+
+// Helper: get the right walk frame image for a player
+function getWalkFrame(spriteKey, dir, time, isMoving) {
+  if (!WALK_ANIM_CHARS.has(spriteKey)) return null;
+  const dirMap = { left: 'left', right: 'right', up: 'up', down: 'down' };
+  const d = dirMap[dir] || 'down';
+  // 4-frame cycle at ~8fps when moving, hold frame 0 when idle
+  const frameIdx = isMoving ? Math.floor(time * 8) % WALK_FRAME_COUNT : 0;
+  const key = `${spriteKey}_${d}_${frameIdx}`;
+  const img = AVATAR_WALK_FRAMES[key];
+  return (img && img.complete && img.naturalWidth > 0) ? img : null;
 }
 
 // 3.0.1 대기실 배경 이미지 프리로더 (고화질 크리스마스 배경 일러스트)
@@ -1609,21 +1641,30 @@ function drawChibiAvatar(ctx, player, isMe, time) {
     }
   }
 
-  // 2) 실제 일러스트 크롭 스프라이트 이미지 렌더링
+  // 2) 아바타 렌더링: 4방향 워킹 프레임 우선 → 단일 스프라이트 → 캔버스 폴백
   const spriteKey = preset.sprite || AVATAR_ID_MAP[player.avatarId] || player.avatarId;
-  const spriteImg = AVATAR_SPRITES[spriteKey];
-  const isSpriteLoaded = spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0;
 
-  if (isSpriteLoaded) {
+  // 2a) 4방향 워킹 애니메이션 프레임 시도
+  const walkFrame = getWalkFrame(spriteKey, dir, time, isMoving);
+  if (walkFrame) {
     ctx.save();
-    if (dir === 'left') {
-      ctx.scale(-1, 1);
-    }
-    const targetH = spriteKey === 'puppy' ? 48 : 64;
-    const targetW = spriteImg.naturalWidth * (targetH / spriteImg.naturalHeight);
-    ctx.drawImage(spriteImg, -targetW / 2, -targetH + bodyY, targetW, targetH);
+    const targetH = spriteKey === 'puppy' ? 52 : 72;
+    const targetW = walkFrame.naturalWidth * (targetH / walkFrame.naturalHeight);
+    ctx.drawImage(walkFrame, -targetW / 2, -targetH + bodyY, targetW, targetH);
     ctx.restore();
   } else {
+    // 2b) 단일 스프라이트 폴백 (방향별 좌우 반전 처리)
+    const spriteImg = AVATAR_SPRITES[spriteKey];
+    const isSpriteLoaded = spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0;
+
+    if (isSpriteLoaded) {
+      ctx.save();
+      if (dir === 'left') ctx.scale(-1, 1);
+      const targetH = spriteKey === 'puppy' ? 48 : 64;
+      const targetW = spriteImg.naturalWidth * (targetH / spriteImg.naturalHeight);
+      ctx.drawImage(spriteImg, -targetW / 2, -targetH + bodyY, targetW, targetH);
+      ctx.restore();
+    } else {
     // 2) 뒷머리 (롱헤어/트윈테일 등 - 폴백)
     ctx.fillStyle = preset.hairColor;
     if (['wavy_long', 'long_straight', 'half_tie'].includes(preset.hair)) {
